@@ -15,7 +15,8 @@ template DrawCardsPublicly(numCards) {
     signal input oldNumCardsInDeck;
     signal input seed;
 
-    signal input drawSalt;
+    signal input opponentRandomness;
+    signal input nonce;
 
     signal output newCardstate;
     signal output newNumCardsInDeck;
@@ -28,9 +29,10 @@ template DrawCardsPublicly(numCards) {
 
 
     /* prove drawn card is correct */
-    component mimcDraw = MiMCSponge(2, 220, 1);
+    component mimcDraw = MiMCSponge(3, 220, 1);
     mimcDraw.ins[0] <== seed;
-    mimcDraw.ins[1] <== drawSalt;
+    mimcDraw.ins[1] <== opponentRandomness;
+    mimcDraw.ins[2] <== nonce;
     mimcDraw.k <== 0;
     component drawHashBits = Num2Bits(254);
     drawHashBits.in <== mimcDraw.outs[0];
