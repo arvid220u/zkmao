@@ -2,6 +2,11 @@
 import sys
 import re
 
+"""
+unroll.py unrolls for loops in circom. we do this because circom seems to have a bug with loops
+sometimes.
+"""
+
 # LIMITATIONS ON FOR LOOPS:
 # 1. no nested loops
 # 2. iteration variable must not appear in things inside 
