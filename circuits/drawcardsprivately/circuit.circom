@@ -12,7 +12,8 @@ template DrawCardsPrivately(numCards) {
     signal private input salt1;
     signal private input salt2;
 
-    signal input drawSalt;
+    signal input opponentRandomness;
+    signal input nonce;
 
     signal output seedCommit;
     signal output oldCommit;
@@ -43,7 +44,8 @@ template DrawCardsPrivately(numCards) {
     publicDraw.oldCardstate <== oldCardstate;
     publicDraw.oldNumCardsInDeck <== oldNumCardsInDeck;
     publicDraw.seed <== seed;
-    publicDraw.drawSalt <== drawSalt;
+    publicDraw.opponentRandomness <== opponentRandomness;
+    publicDraw.nonce <== nonce;
 
     newCardstate === publicDraw.newCardstate;
     newNumCardsInDeck === publicDraw.newNumCardsInDeck;

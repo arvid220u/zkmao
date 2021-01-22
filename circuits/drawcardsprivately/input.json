@@ -2,9 +2,10 @@
     "oldCardstate": "0",
     "oldNumCardsInDeck": "10",
     "seed": "123",
-    "drawSalt": "123321123321",
+    "opponentRandomness": "123321123321",
+    "nonce": "2",
     "salt1": "123321",
     "salt2": "321123",
-    "newCardstate": "81",
+    "newCardstate": "6561",
     "newNumCardsInDeck": "9"
 }

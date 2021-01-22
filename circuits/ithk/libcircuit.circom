@@ -259,4 +259,3 @@ template IthK(b, k, numDigits){
 
     j <== answer[numDigits];
 }
-

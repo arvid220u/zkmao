@@ -11,4 +11,3 @@ template Random() {
     mod.m <== n;
     out <== mod.remainder;
 }
-
