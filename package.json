@@ -1,0 +1,24 @@
+{
+  "name": "zkcards",
+  "version": "1.0.0",
+  "description": "zk cards",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arvid220u/zkcards.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arvid220u/zkcards/issues"
+  },
+  "homepage": "https://github.com/arvid220u/zkcards#readme",
+  "dependencies": {
+    "circom": "^0.5.35",
+    "circomlib": "^0.4.1",
+    "snarkjs": "^0.3.55"
+  }
+}
