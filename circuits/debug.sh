@@ -2,6 +2,10 @@
 
 DIR=$(echo $1 | sed 's:/*$::')
 
+if [ $# -gt 1 ]; then
+    echo "unrolling using command: ./unroll.py $DIR/circuit_raw.circom ${@:2}"
+    ./unroll.py $DIR/circuit_raw.circom ${@:2}
+fi
 cd $DIR
 circom circuit.circom --r1cs --wasm --sym -v
 snarkjs r1cs info circuit.r1cs
