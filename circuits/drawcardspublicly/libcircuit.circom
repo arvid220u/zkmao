@@ -58,4 +58,3 @@ template DrawCardsPublicly(numCards) {
     newNumCardsInDeck <== oldNumCardsInDeck - 1;
 }
 
-component main = DrawCardsPublicly(10);

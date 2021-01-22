@@ -12,4 +12,3 @@ template Random() {
     out <== mod.remainder;
 }
 
-component main = Random();
