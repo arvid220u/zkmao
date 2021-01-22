@@ -2,11 +2,23 @@
 import sys
 import re
 
+# LIMITATIONS ON FOR LOOPS:
+# 1. no nested loops
+# 2. iteration variable must not appear in things inside 
+# 3. variables that should be redefined in every iteratoin should include the iteration variable
+# 4. only increment by 1
+# 5. only <
+# 6. starting variable must be a number
+# 7. ending must be variable
+
 def read(file):
     with open(file, "r") as f:
         return f.read()
 
 def replaceloops(contents, state):
+
+
+    
 
     rgx = r'for\s*\(var\s*(\w+)\s*=\s*(\d+);\s*\w+\s*<\s*(\w+);\s*\w+\+\+\)\s*\{([^}]*)\}'
     # matches = re.findall(rgx, contents)
@@ -31,18 +43,14 @@ def replaceloops(contents, state):
 
 
 def newfile(file):
-    return file.split(".")[0] + "_unrolled.circom"
+    return "/".join(file.split("/")[:-1]) + "/circuit.circom"
 
 def write(file, contents):
     with open(file, "w") as f:
         f.write(contents)
 
-def main(file):
+def main(file, state):
     contents = read(file)
-
-    state = {
-        "numDigits": 10
-    }
 
     newcontents = replaceloops(contents, state)
 
@@ -52,4 +60,9 @@ def main(file):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    file_name = sys.argv[1]
+    state = {}
+    for i in range(1, len(sys.argv)//2):
+        state[sys.argv[2 * i ]] = int(sys.argv[2 * i + 1])
+
+    main(file_name, state)
