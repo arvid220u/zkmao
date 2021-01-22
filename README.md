@@ -1,1 +1,7 @@
 # zkcards
+
+run
+
+```
+npm install
+```
