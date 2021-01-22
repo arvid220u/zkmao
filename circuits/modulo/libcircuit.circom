@@ -23,3 +23,4 @@ template Modulo(numBits) {
     lt.in[1] <== m;
     lt.out === 1;
 }
+

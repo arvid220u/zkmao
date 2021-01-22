@@ -11,3 +11,5 @@ template Random() {
     mod.m <== n;
     out <== mod.remainder;
 }
+
+component main = Random();
