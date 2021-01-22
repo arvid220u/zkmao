@@ -10,7 +10,7 @@ cp ../powersoftau/pot15_final.ptau $DIR/pot15_final.ptau
 cd $DIR
 circom circuit.circom --r1cs --wasm --sym -v
 snarkjs r1cs info circuit.r1cs
-snarkjs r1cs export json circuit.r1cs circuit.r1cs.json
+#snarkjs r1cs export json circuit.r1cs circuit.r1cs.json
 snarkjs zkey new circuit.r1cs pot15_final.ptau circuit_$DIR.zkey
 snarkjs zkey beacon circuit_$DIR.zkey circuit_final.zkey 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10
 snarkjs zkey export verificationkey circuit_final.zkey verification_key.json

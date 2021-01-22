@@ -1,2 +1,3 @@
 node_modules
 circuits/*/pot15_final.ptau
+circuits/*/*.zkey
