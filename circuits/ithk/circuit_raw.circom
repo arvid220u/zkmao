@@ -25,28 +25,29 @@ template IthK(b, k, numDigits){
     signal counter[numDigits+1];
     counter[0] <== 0;
     for (var ii = 0; ii < numDigits; ii++) {
-        component iseq_ii = IsEqual();
-        iseq_ii.in[0] <== digits[ii];
-        iseq_ii.in[1] <== k;
-        counter[ii+1] <== counter[ii] + iseq_ii.out;
+        component iseq1_ii = IsEqual();
+        iseq1_ii.in[0] <== digits[ii];
+        iseq1_ii.in[1] <== k;
+        counter[ii+1] <== counter[ii] + iseq1_ii.out;
     }
 
     signal rightIndex[numDigits+1];
     rightIndex[0] <== 0;
     for (var ii = 0; ii < numDigits; ii++) {
-        component iseq_ii = IsEqual();
-        iseq_ii.in[0] <== counter[ii+1];
-        iseq_ii.in[1] <== i+1;
-        rightIndex[ii+1] <== iseq_ii.out;
+        component iseq2_ii = IsEqual();
+        iseq2_ii.in[0] <== counter[ii+1];
+        iseq2_ii.in[1] <== i+1;
+        rightIndex[ii+1] <== iseq2_ii.out;
     }
 
     signal answer[numDigits+1];
+    answer[0] <== 0;
     for (var ii = 0; ii < numDigits; ii++) {
         signal diff_ii <== rightIndex[ii+1] - rightIndex[ii];
-        component iseq_ii = IsEqual();
-        iseq_ii.in[0] <== diff_ii;
-        iseq_ii.in[1] <== 1;
-        answer[ii+1] <== answer[ii] + iseq_ii.out * ii;
+        component iseq3_ii = IsEqual();
+        iseq3_ii.in[0] <== diff_ii;
+        iseq3_ii.in[1] <== 1;
+        answer[ii+1] <== answer[ii] + iseq3_ii.out * ii;
     }
 
     j <== answer[numDigits];
