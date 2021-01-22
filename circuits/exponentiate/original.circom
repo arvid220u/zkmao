@@ -1,5 +1,5 @@
 include "../../node_modules/circomlib/circuits/comparators.circom"
-template exponentiate(base, maxExponent){
+template Exponentiate(base, maxExponent){
   signal private input exponent;
   signal output answer;
   signal powers[maxExponent + 1];
@@ -12,13 +12,13 @@ template exponentiate(base, maxExponent){
   signal sum[maxExponent + 2];
   sum[0] <== 0;
   for(var iii = 0; iii < maxExponent + 1; iii++){
-    component eq_iii = isEqual();
+    component eq_iii = IsEqual();
     eq_iii.in[0] <== iii;
     eq_iii.in[1] <== exponent;
-    sum[iii+1] <== sum[iii] + eq_iii.out*powers[i]; 
+    sum[iii+1] <== sum[iii] + eq_iii.out*powers[iii]; 
     
   }
-  answer <== sum[maxEponent + 1];
+  answer <== sum[maxExponent + 1];
 }
 
-component main = exponentiate(3, 10);
+component main = Exponentiate(3, 10);
