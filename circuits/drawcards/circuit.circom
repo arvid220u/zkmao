@@ -1,5 +1,6 @@
 
-template DrawCards() {
+// 0: deck, 1: hand, 2: discarded
+template DrawCards(numCards) {
     signal private input oldCardstate;
     signal private input oldNumCardsInDeck;
     signal private input newCardstate;
@@ -40,18 +41,24 @@ template DrawCards() {
     signal drawHash;
     drawHash <== drawHashBits.out[4] * 16 + drawHashBits.out[3] * 8 + drawHashBits.out[2] * 4 + drawHashBits.out[1] * 2 + drawHashBits.out[0];
 
-    signal drawRemainder;
-    signal drawQuotient;
-    drawRemainder <-- drawHash % 6;
-    drawQuotient <-- (drawHash - drawRemainder) / 6;
-    //should enforce that remainder is bounded
-    drawHash === 6 * drawQuotient + drawRemainder;
-    component quotientBound = LessThan(4);
-    quotientBound.in[0] <== drawQuotient;
-    // quotient < floor(32 / 6) + 1
-    quotientBound.in[1] <== 6;
-    quotientBound.out === 1;
-    d === drawRemainder + 1;
+    component rand = Random();
+    rand.n <== oldNumCardsInDeck;
+    rand.randomSource <== drawHash;
+    signal chosenDeckIndex <== rand.out;
+
+    // our numbers are trinary, and a deck card is indicated by a 0
+    // the max number of digits is numCards
+    component ith3 = IthK(3, 0, numCards)
+    ith3.i <== chosenDeckIndex;
+    ith3.n <== oldCardstate;
+    signal chosenCard <== ith3.j;
+
+    // now exponentiate this card
+    component exp = Exponentiate(3, numCards)
+    exp.exponent <== chosenCard;
+    signal chosenCardValue <== exp.answer;
+
+    newCardstate === oldCardstate + chosenCardValue;
 }
 
-component main = DrawCards();
+component main = DrawCards(10);

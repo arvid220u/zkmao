@@ -120,20 +120,20 @@ template WeirdLoop(base, maxExp){
     // if we comment out the loop and unroll it (uncommenting the lines below it),
     // it works. this seems weird because it feels like the unrolled loop should be
     // equivalent.
-    //for (var i = 0; i < maxExp+1; i++){
-    //    diff[i] <== exponent - i;
-    //    inv[i] <-- diff[i]!=0 ? 1/diff[i] : 0;
-    //    outseries[i+1] <== outseries[i] + diff[i];
-    //}
-     diff[0] <== exponent - 0;
-     inv[0] <-- diff[0]!=0 ? 1/diff[0] : 0;
-     outseries[0+1] <== outseries[0] + diff[0];
-     diff[1] <== exponent - 1;
-     inv[1] <-- diff[1]!=0 ? 1/diff[1] : 0;
-     outseries[1+1] <== outseries[1] + diff[1];
-     diff[2] <== exponent - 2;
-     inv[2] <-- diff[2]!=0 ? 1/diff[2] : 0;
-     outseries[2+1] <== outseries[2] + diff[2];
+    for (var i = 0; i < maxExp+1; i++){
+       diff[i] <== exponent - i;
+       inv[i] <-- diff[i]!=0 ? 1/diff[i] : 0;
+       outseries[i+1] <== outseries[i] + diff[i];
+    }
+    //  diff[0] <== exponent - 0;
+    //  inv[0] <-- diff[0]!=0 ? 1/diff[0] : 0;
+    //  outseries[0+1] <== outseries[0] + diff[0];
+    //  diff[1] <== exponent - 1;
+    //  inv[1] <-- diff[1]!=0 ? 1/diff[1] : 0;
+    //  outseries[1+1] <== outseries[1] + diff[1];
+    //  diff[2] <== exponent - 2;
+    //  inv[2] <-- diff[2]!=0 ? 1/diff[2] : 0;
+    //  outseries[2+1] <== outseries[2] + diff[2];
 
     answer <== outseries[maxExp+1];
 }

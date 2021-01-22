@@ -6,5 +6,8 @@ template Random() {
     signal input randomSource;
     signal output out;
 
-    out <-- randomSource % n; // TODO: Fix this
+    component mod = Modulo(100); // TODO: fix this magic number!!!
+    mod.n <== randomSource;
+    mod.m <== n;
+    out <== mod.remainder;
 }

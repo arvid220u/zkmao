@@ -14,7 +14,7 @@ template IthK(b, k, numDigits){
     signal divided[numDigits+1];
     divided[0] <== n;
     for (var ii = 0; ii < numDigits; ii++) {
-        component mod_ii = Modulo(100); // TODO: change this!!!!
+        component mod_ii = Modulo(100); // TODO: change this magic number!!!!
         mod_ii.n <== divided[ii];
         mod_ii.m <== b;
         digits[ii] <== mod_ii.remainder;
