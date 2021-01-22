@@ -21,7 +21,7 @@ def replaceloops(contents, state):
 
     
 
-    rgx = r'for\s*\(var\s*(\w+)\s*=\s*(\d+);\s*\w+\s*<\s*(\w+);\s*\w+\+\+\)\s*\{([^}]*)\}'
+    rgx = r'for\s*\(var\s*(\w+)\s*=\s*(\d+);\s*\w+\s*<\s*([^;]+);\s*\w+\+\+\)\s*\{([^}]*)\}'
     # matches = re.findall(rgx, contents)
     matches = re.finditer(rgx, contents)
 
@@ -31,7 +31,7 @@ def replaceloops(contents, state):
         var = match.group(1)
         initval = int(match.group(2))
         endvar = match.group(3)
-        endval = state[endvar]
+        endval = eval(endvar, state)
         code = match.group(4)
 
         replacecode = ""
