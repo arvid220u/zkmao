@@ -12,7 +12,27 @@ to install `circom`, `snarkjs` and `circomlib`.
 
 ## running
 
-`cd circuits`, then edit `drawcardsprivately/input.json` and run:
+first `cd circuits`.
+
+then you need to unroll:
+
+```
+./unroll.py ithk/circuit_raw.circom maxDigits 10
+```
+
+and
+
+```
+./unroll.py exponentiate/original.circom maxExponent 10
+```
+
+then you need to libify:
+
+```
+./libify.sh
+```
+
+then edit `drawcardsprivately/input.json` and run:
 
 ```
 ./compile.sh drawcardsprivately
