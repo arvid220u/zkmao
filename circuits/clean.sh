@@ -3,7 +3,7 @@
 DIR=$(echo $1 | sed 's:/*$::')
 
 cd $DIR
-if [ $2=" " ]; then
+if [ $2="u" ]; then
     echo "removing unrolled"
     rm circuit.circom
 fi
