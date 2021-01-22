@@ -10,6 +10,7 @@ import re
 # 5. only <
 # 6. starting variable must be a number
 # 7. ending must be variable
+# 8. cannot share variable names between for loops
 
 def read(file):
     with open(file, "r") as f:
