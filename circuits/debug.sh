@@ -6,6 +6,7 @@ if [ $# -gt 1 ]; then
     echo "unrolling using command: ./unroll.py $DIR/circuit_raw.circom ${@:2}"
     ./unroll.py $DIR/circuit_raw.circom ${@:2}
 fi
+cp ../powersoftau/pot15_final.ptau $DIR/pot15_final.ptau
 cd $DIR
 circom circuit.circom --r1cs --wasm --sym -v
 snarkjs r1cs info circuit.r1cs
