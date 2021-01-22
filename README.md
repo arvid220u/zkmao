@@ -17,7 +17,7 @@ first `cd circuits`.
 then you need to unroll:
 
 ```
-./unroll.py ithk/circuit_raw.circom maxDigits 10
+./unroll.py ithk/circuit_raw.circom numDigits 10
 ```
 
 and

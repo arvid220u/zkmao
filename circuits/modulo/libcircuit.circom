@@ -22,4 +22,13 @@ template Modulo(numBits) {
     lt.in[0] <== remainder;
     lt.in[1] <== m;
     lt.out === 1;
+
+    // TODO: IT FEELS LIKE THIS IS INSECURE.
+    // potential exploit:
+    //  - create a really big remainder
+    //  - create a negative quotient
+    //  - the range checks only checks numBits bits, and the remainder will be seen as 0 there
+    //  - the equation may still hold
+    //  - this is bad because the big remainder can be used to generate fake proofs later, potentially
 }
+

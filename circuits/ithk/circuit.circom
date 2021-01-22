@@ -260,3 +260,4 @@ template IthK(b, k, numDigits){
     j <== answer[numDigits];
 }
 
+component main = IthK(2, 0, 10);
