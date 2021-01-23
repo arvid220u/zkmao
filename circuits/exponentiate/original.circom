@@ -1,4 +1,5 @@
 include "../../node_modules/circomlib/circuits/comparators.circom"
+
 template Exponentiate(base, maxExponent) {
   signal private input exponent;
   signal output answer;
