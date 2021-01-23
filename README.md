@@ -9,6 +9,8 @@ setup:
 - players should be able to play their cards
 - it should not be possible to cheat
 
+the main circuit is `circuit/drawcardsprivately`. the other circuits are helper circuits.
+
 ## setup
 
 run
