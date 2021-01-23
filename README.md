@@ -1,5 +1,14 @@
 # zkcards
 
+zksnarks for a card game.
+
+setup:
+- each player has their own deck
+- each player should be able to randomly draw a card from the deck (without replacement)
+- the players' hands should be private
+- players should be able to play their cards
+- it should not be possible to cheat
+
 ## setup
 
 run
