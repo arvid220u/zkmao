@@ -44,7 +44,7 @@ template DrawCardsPublicly(numCards) {
     rand.randomSource <== drawHash;
     signal chosenDeckIndex <== rand.out;
 
-    // our numbers are trinary, and a deck card is indicated by a 0
+    // our numbers are ternary, and a deck card is indicated by a 0
     // the max number of digits is numCards
     component ith3 = IthK(3, 0, numCards)
     ith3.i <== chosenDeckIndex;
