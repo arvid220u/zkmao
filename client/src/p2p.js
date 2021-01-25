@@ -13,18 +13,21 @@ export function createConn() {
     return conn;
 }
 
+function onOpen() {
+  console.log("opened chat!!");
+}
+function onMessage(e) {
+  console.log("received message!");
+  let data = JSON.parse(e.data)
+  console.log(data.message);
+}
+
 export function createOffer(conn, setOffer) {
   console.log("create offer");
   conn.dc = conn.pc.createDataChannel('test', {reliable: true})
 
-  conn.dc.onopen = () => { 
-    console.log("opened chat!!!");
-  }
-  conn.dc.onmessage = (e) => {
-    console.log("received message!");
-    let data = JSON.parse(e.data)
-    console.log(data.message);
-  }
+  conn.dc.onopen = onOpen;
+  conn.dc.onmessage = onMessage;
 
   conn.pc.onicecandidate = function (e) {
     if (e.candidate == null) {
@@ -34,5 +37,27 @@ export function createOffer(conn, setOffer) {
 
   conn.pc.createOffer((desc) => {
     conn.pc.setLocalDescription(desc, function() {}, function() {})
+  }, () => {}, SDP_CONSTRAINTS)
+}
+
+export function join(conn, joinKey, setAnswer) {
+  var offerDesc = new RTCSessionDescription(JSON.parse(joinKey))
+
+  conn.pc.ondatachannel = function (e) {
+    conn.dc = e.channel || e;
+    conn.dc.onopen = onOpen;
+    conn.dc.onmessage = onMessage;
+  }
+  
+  conn.pc.onicecandidate = function (e) {
+    if (e.candidate == null) {
+      setAnswer(JSON.stringify(conn.pc.localDescription));
+    }
+  }
+
+  conn.pc.setRemoteDescription(offerDesc)
+
+  conn.pc.createAnswer((answerDesc) => {
+    conn.pc.setLocalDescription(answerDesc)
   }, () => {}, SDP_CONSTRAINTS)
 }

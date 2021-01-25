@@ -22,11 +22,20 @@ function Create2(props) {
   )
 }
 
-function Join(props) {
+function Join1(props) {
+  const [joinKey, setJoinKey] = useState("");
   return (
     <div>
-      <input type="text"></input>
-      <button onClick={() => console.log("join")}>Join</button>
+      <input type="text" value={joinKey} onChange={(e) => setJoinKey(e.target.value)}></input>
+      <button onClick={() => p2p.join(props.connRef.current, joinKey, props.setMyAnswer)}>Join</button>
+    </div>
+  )
+}
+
+function Join2(props) {
+  return (
+    <div>
+      send this message to your friends: <code>{props.answer}</code><br/>
     </div>
   )
 }
@@ -36,20 +45,23 @@ function Welcome(props) {
   return (
     <div>
       <Create1 connRef={props.connRef} setMyOffer={props.setMyOffer}/><br/>
-      <Join /><br/>
+      <Join1 connRef={props.connRef} setMyAnswer={props.setMyAnswer}/><br/>
     </div>
   )
 }
 
 function Setup(props) {
   const [myOffer, setMyOffer] = useState(null);
+  const [myAnswer, setMyAnswer] = useState(null);
 
   if (myOffer) {
     return <Create2 connRef={props.connRef} offer={myOffer}/>;
+  } else if (myAnswer) {
+    return <Join2 connRef={props.connRef} answer={myAnswer}/>;
   } else {
     return (
       <React.Fragment>
-        <Welcome connRef={props.connRef} setMyOffer={(offer) => {console.log(offer); setMyOffer(offer);}}/>
+        <Welcome connRef={props.connRef} setMyOffer={(offer) => {console.log(offer); setMyOffer(offer);}} setMyAnswer={setMyAnswer}/>
       </React.Fragment>
     )
   }
