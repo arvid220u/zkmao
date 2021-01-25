@@ -1,5 +1,5 @@
-include "../../node_modules/circomlib/circuits/mimcsponge.circom"
-include "../../node_modules/circomlib/circuits/comparators.circom"
+include "../node_modules/circomlib/circuits/mimcsponge.circom"
+include "../node_modules/circomlib/circuits/comparators.circom"
 
 template Modulo(numBits) {
     signal input n;

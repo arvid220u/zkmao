@@ -2,8 +2,8 @@
 // this is to run privately so you can get the correct values for the newCardstate and newNumCardsInDeck
 
 
-include "../../node_modules/circomlib/circuits/mimcsponge.circom"
-include "../../node_modules/circomlib/circuits/comparators.circom"
+include "../node_modules/circomlib/circuits/mimcsponge.circom"
+include "../node_modules/circomlib/circuits/comparators.circom"
 include "../random/libcircuit.circom"
 include "../modulo/libcircuit.circom"
 include "../ithk/libcircuit.circom"
@@ -44,7 +44,7 @@ template DrawCardsPublicly(numCards) {
     rand.randomSource <== drawHash;
     signal chosenDeckIndex <== rand.out;
 
-    // our numbers are trinary, and a deck card is indicated by a 0
+    // our numbers are ternary, and a deck card is indicated by a 0
     // the max number of digits is numCards
     component ith3 = IthK(3, 0, numCards)
     ith3.i <== chosenDeckIndex;

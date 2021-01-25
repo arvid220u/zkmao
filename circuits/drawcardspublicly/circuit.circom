@@ -2,8 +2,8 @@
 // this is to run privately so you can get the correct values for the newCardstate and newNumCardsInDeck
 
 
-include "../../node_modules/circomlib/circuits/mimcsponge.circom"
-include "../../node_modules/circomlib/circuits/comparators.circom"
+include "../node_modules/circomlib/circuits/mimcsponge.circom"
+include "../node_modules/circomlib/circuits/comparators.circom"
 include "../random/libcircuit.circom"
 include "../modulo/libcircuit.circom"
 include "../ithk/libcircuit.circom"

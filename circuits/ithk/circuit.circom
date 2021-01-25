@@ -1,5 +1,5 @@
-include "../../node_modules/circomlib/circuits/mimcsponge.circom"
-include "../../node_modules/circomlib/circuits/comparators.circom"
+include "../node_modules/circomlib/circuits/mimcsponge.circom"
+include "../node_modules/circomlib/circuits/comparators.circom"
 include "../modulo/libcircuit.circom"
 
 // computes j s.t. j is the index of the ith k digit in the b-ary representation of n

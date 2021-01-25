@@ -1,5 +1,5 @@
-include "../../node_modules/circomlib/circuits/mimcsponge.circom"
-include "../../node_modules/circomlib/circuits/comparators.circom"
+include "../node_modules/circomlib/circuits/mimcsponge.circom"
+include "../node_modules/circomlib/circuits/comparators.circom"
 include "../drawcardspublicly/libcircuit.circom"
 
 // 0: deck, 1: hand, 2: discarded
