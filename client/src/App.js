@@ -53,11 +53,24 @@ function Welcome(props) {
 
 function Lobby(props) {
   const [chatMessage, setChatMessage] = useState("");
+  const [messages, setMessages] = useState("");
 
   function onSendMessage() {
     p2p.sendMessage(props.connRef.current, chatMessage);
+    newMessage(chatMessage);
     setChatMessage("");
   }
+
+  function newMessage(m) {
+    setMessages(oldm => oldm + "\n" + m);
+  }
+
+  useEffect(() => {
+    props.connRef.current.onMessage = (m) => newMessage(m.message);
+    return () => {
+      props.connRef.current.onMessage = null;
+    }
+  }, []);
 
   return (
     <div>
@@ -67,6 +80,8 @@ function Lobby(props) {
       <hr/>
       <input type="text" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)}></input>
       <button onClick={onSendMessage}>Send message</button>
+      messages:
+      <p style={{whiteSpace: "pre-line"}}>{messages}</p>
     </div>
   )
 }
@@ -93,7 +108,7 @@ function App() {
 
   useEffect(() => {
     connRef.current = p2p.createConn();
-  })
+  }, []);
 
   return (
     <div className="App">

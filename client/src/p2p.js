@@ -8,7 +8,8 @@ var SDP_CONSTRAINTS = {
 export function createConn() {
     let conn = {
         pc: new RTCPeerConnection(RTC_CONFIG),
-        dc: null
+        dc: null,
+        onMessage: null,
     }
     return conn;
 }
@@ -16,10 +17,13 @@ export function createConn() {
 function onOpen() {
   console.log("opened chat!!");
 }
-function onMessage(e) {
+function onMessage(conn, e) {
   console.log("received message!");
   let data = JSON.parse(e.data)
   console.log(data.message);
+  if (conn.onMessage) {
+    conn.onMessage(data);
+  }
 }
 
 export function sendMessage(conn, message) {
@@ -34,7 +38,7 @@ export function createOffer(conn, setOffer) {
   conn.dc = conn.pc.createDataChannel('test', {reliable: true})
 
   conn.dc.onopen = onOpen;
-  conn.dc.onmessage = onMessage;
+  conn.dc.onmessage = (e) => onMessage(conn, e);
 
   conn.pc.onicecandidate = function (e) {
     if (e.candidate == null) {
@@ -53,7 +57,7 @@ export function join(conn, joinKey, setAnswer) {
   conn.pc.ondatachannel = function (e) {
     conn.dc = e.channel || e;
     conn.dc.onopen = onOpen;
-    conn.dc.onmessage = onMessage;
+    conn.dc.onmessage = (e) => onMessage(conn, e);
   }
   
   conn.pc.onicecandidate = function (e) {
