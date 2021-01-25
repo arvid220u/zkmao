@@ -22,6 +22,13 @@ function onMessage(e) {
   console.log(data.message);
 }
 
+export function sendMessage(conn, message) {
+  send(conn, {message: message});
+}
+export function send(conn, json) {
+  conn.dc.send(JSON.stringify(json));
+}
+
 export function createOffer(conn, setOffer) {
   console.log("create offer");
   conn.dc = conn.pc.createDataChannel('test', {reliable: true})
@@ -60,4 +67,9 @@ export function join(conn, joinKey, setAnswer) {
   conn.pc.createAnswer((answerDesc) => {
     conn.pc.setLocalDescription(answerDesc)
   }, () => {}, SDP_CONSTRAINTS)
+}
+
+export function acceptAnswer(conn, joinKey) {
+  var answerDesc = new RTCSessionDescription(JSON.parse(joinKey));
+  conn.pc.setRemoteDescription(answerDesc);
 }

@@ -12,12 +12,13 @@ function Create1(props) {
 }
 
 function Create2(props) {
+  const [joinKey, setJoinKey] = useState("");
   return (
     <div>
       send this message to your friends: <code>{props.offer}</code><br/>
       input their answer:
-      <input type="text"></input>
-      <button onClick={() => console.log("add a player")}>Add player</button>
+      <input type="text" value={joinKey} onChange={(e) => setJoinKey(e.target.value)}></input>
+      <button onClick={() => p2p.acceptAnswer(props.connRef.current, joinKey)}>Add player</button>
     </div>
   )
 }
@@ -50,18 +51,36 @@ function Welcome(props) {
   )
 }
 
+function Lobby(props) {
+  const [chatMessage, setChatMessage] = useState("");
+
+  function onSendMessage() {
+    p2p.sendMessage(props.connRef.current, chatMessage);
+    setChatMessage("");
+  }
+
+  return (
+    <div>
+      {props.offer ? <Create2 connRef={props.connRef} offer={props.offer}/> : <Join2 connRef={props.connRef} answer={props.answer}/>}
+      <hr/>
+      Participants list: idk<br/>
+      <hr/>
+      <input type="text" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)}></input>
+      <button onClick={onSendMessage}>Send message</button>
+    </div>
+  )
+}
+
 function Setup(props) {
   const [myOffer, setMyOffer] = useState(null);
   const [myAnswer, setMyAnswer] = useState(null);
 
-  if (myOffer) {
-    return <Create2 connRef={props.connRef} offer={myOffer}/>;
-  } else if (myAnswer) {
-    return <Join2 connRef={props.connRef} answer={myAnswer}/>;
+  if (myOffer || myAnswer) {
+    return <Lobby connRef={props.connRef} offer={myOffer} answer={myAnswer}/>;
   } else {
     return (
       <React.Fragment>
-        <Welcome connRef={props.connRef} setMyOffer={(offer) => {console.log(offer); setMyOffer(offer);}} setMyAnswer={setMyAnswer}/>
+        <Welcome connRef={props.connRef} setMyOffer={setMyOffer} setMyAnswer={setMyAnswer}/>
       </React.Fragment>
     )
   }
