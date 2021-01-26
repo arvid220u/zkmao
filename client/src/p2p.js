@@ -11,6 +11,11 @@ export function createConn() {
         dc: null,
         onMessage: null,
     }
+    conn.pc.ondatachannel = (e) => {
+      conn.dc = e.channel || e;
+      conn.dc.onopen = onOpen;
+      conn.dc.onmessage = (e) => onMessage(conn, e);
+    }
     return conn;
 }
 
@@ -35,45 +40,36 @@ export function send(conn, json) {
 
 export function createOffer(conn, setOffer) {
   console.log("create offer");
-  conn.dc = conn.pc.createDataChannel('test', {reliable: true})
+  conn.dc = conn.pc.createDataChannel('chat')
 
   conn.dc.onopen = onOpen;
   conn.dc.onmessage = (e) => onMessage(conn, e);
 
-  conn.pc.onicecandidate = function (e) {
-    if (e.candidate == null) {
-      setOffer(JSON.stringify(conn.pc.localDescription));
-    }
+  conn.pc.onicecandidate = (e) => {
+    if (e.candidate) return;
+    setOffer(JSON.stringify(conn.pc.localDescription));
   }
 
-  conn.pc.createOffer((desc) => {
-    conn.pc.setLocalDescription(desc, function() {}, function() {})
-  }, () => {}, SDP_CONSTRAINTS)
+  conn.pc.createOffer()
+    .then(d => conn.pc.setLocalDescription(d))
+    .catch(console.log);
 }
 
 export function join(conn, joinKey, setAnswer) {
-  var offerDesc = new RTCSessionDescription(JSON.parse(joinKey))
+  let offerDesc = new RTCSessionDescription(JSON.parse(joinKey))
 
-  conn.pc.ondatachannel = function (e) {
-    conn.dc = e.channel || e;
-    conn.dc.onopen = onOpen;
-    conn.dc.onmessage = (e) => onMessage(conn, e);
-  }
-  
-  conn.pc.onicecandidate = function (e) {
-    if (e.candidate == null) {
-      setAnswer(JSON.stringify(conn.pc.localDescription));
-    }
+  conn.pc.onicecandidate = (e) => {
+    if (e.candidate) return;
+    setAnswer(JSON.stringify(conn.pc.localDescription));
   }
 
   conn.pc.setRemoteDescription(offerDesc)
-
-  conn.pc.createAnswer((answerDesc) => {
-    conn.pc.setLocalDescription(answerDesc)
-  }, () => {}, SDP_CONSTRAINTS)
+    .then(() => conn.pc.createAnswer())
+    .then(d => conn.pc.setLocalDescription(d))
+    .catch(console.log)
 }
 
 export function acceptAnswer(conn, joinKey) {
   var answerDesc = new RTCSessionDescription(JSON.parse(joinKey));
-  conn.pc.setRemoteDescription(answerDesc);
+  conn.pc.setRemoteDescription(answerDesc).catch(console.log);
 }
