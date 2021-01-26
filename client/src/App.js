@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
 
 import { Game } from "./Game.js";
+import { Chat } from "./Chat.js";
 
 function Create1(props) {
   return (
@@ -78,26 +79,6 @@ function Welcome(props) {
 }
 
 function Lobby(props) {
-  const [chatMessage, setChatMessage] = useState("");
-  const [messages, setMessages] = useState("");
-
-  function onSendMessage() {
-    p2p.sendMessage(props.connRef.current, chatMessage);
-    newMessage(chatMessage);
-    setChatMessage("");
-  }
-
-  function newMessage(m) {
-    setMessages((oldm) => oldm + "\n" + m);
-  }
-
-  useEffect(() => {
-    props.connRef.current.onMessage = (m) => newMessage(m.message);
-    return () => {
-      props.connRef.current.onMessage = null;
-    };
-  }, [props.connRef]);
-
   return (
     <div>
       {props.offer ? (
@@ -111,6 +92,7 @@ function Lobby(props) {
       <hr />
       <button onClick={props.startGame}>Start game!</button>
       <hr />
+      <Chat connRef={props.connRef} />
     </div>
   );
 }
