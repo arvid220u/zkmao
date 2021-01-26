@@ -1,9 +1,9 @@
 const RTC_CONFIG = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };  
-var SDP_CONSTRAINTS = {
-    optional: [],
-}
+
+// var haveGum = navigator.mediaDevices.getUserMedia({video:true, audio:true}).catch(console.log);
+
 
 export function createConn() {
     let conn = {
@@ -12,10 +12,11 @@ export function createConn() {
         onMessage: null,
     }
     conn.pc.ondatachannel = (e) => {
-      conn.dc = e.channel || e;
+      conn.dc = e.channel;
       conn.dc.onopen = onOpen;
       conn.dc.onmessage = (e) => onMessage(conn, e);
     }
+    conn.pc.oniceconnectionstatechange = e => console.log(conn.pc.iceConnectionState);
     return conn;
 }
 
@@ -40,36 +41,42 @@ export function send(conn, json) {
 
 export function createOffer(conn, setOffer) {
   console.log("create offer");
-  conn.dc = conn.pc.createDataChannel('chat')
+  console.log(conn.pc.signalingState);
+  conn.dc = conn.pc.createDataChannel("chat");
 
   conn.dc.onopen = onOpen;
   conn.dc.onmessage = (e) => onMessage(conn, e);
+
+  // haveGum.then(() => conn.pc.createOffer())
+  conn.pc.createOffer()
+    .then(d => conn.pc.setLocalDescription(d))
+    .catch(console.log);
 
   conn.pc.onicecandidate = (e) => {
     if (e.candidate) return;
     setOffer(JSON.stringify(conn.pc.localDescription));
   }
-
-  conn.pc.createOffer()
-    .then(d => conn.pc.setLocalDescription(d))
-    .catch(console.log);
 }
 
 export function join(conn, joinKey, setAnswer) {
-  let offerDesc = new RTCSessionDescription(JSON.parse(joinKey))
+  console.log("join");
+  console.log(conn.pc.signalingState);
+  let offerDesc = new RTCSessionDescription(JSON.parse(joinKey));
+
+  conn.pc.setRemoteDescription(offerDesc)
+    .then(() => conn.pc.createAnswer())
+    .then(d => conn.pc.setLocalDescription(d))
+    .catch(console.log);
 
   conn.pc.onicecandidate = (e) => {
     if (e.candidate) return;
     setAnswer(JSON.stringify(conn.pc.localDescription));
   }
-
-  conn.pc.setRemoteDescription(offerDesc)
-    .then(() => conn.pc.createAnswer())
-    .then(d => conn.pc.setLocalDescription(d))
-    .catch(console.log)
 }
 
 export function acceptAnswer(conn, joinKey) {
+  console.log("join");
+  console.log(conn.pc.signalingState);
   var answerDesc = new RTCSessionDescription(JSON.parse(joinKey));
   conn.pc.setRemoteDescription(answerDesc).catch(console.log);
 }
