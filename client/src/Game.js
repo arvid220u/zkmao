@@ -9,6 +9,7 @@ export function Game(props) {
   return (
     <div>
       welcome to the game good sir!
+      <hr />
       <Chat connRef={props.connRef} />
     </div>
   );
