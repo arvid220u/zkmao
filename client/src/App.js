@@ -70,7 +70,7 @@ function Lobby(props) {
     return () => {
       props.connRef.current.onMessage = null;
     }
-  }, []);
+  }, [props.connRef]);
 
   return (
     <div>
