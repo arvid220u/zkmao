@@ -31,6 +31,7 @@ function onOpen(conn) {
 }
 function onMessage(conn, e) {
   console.log("received message!");
+  console.log(conn.messageHandlers);
   let data = JSON.parse(e.data);
   console.log(data);
   for (const indx in conn.messageHandlers) {
@@ -38,11 +39,14 @@ function onMessage(conn, e) {
   }
 }
 export function addMessageHandler(conn, handler) {
-  conn.messageHandlers[conn.messageHandlersIndx] = handler;
-  conn.messageHandlersIndx = `${parseInt(conn.messageHandlersIndx) + 1}`;
+  const indx = conn.messageHandlersIndx;
+  conn.messageHandlers[indx] = handler;
+  conn.messageHandlersIndx = `${parseInt(indx) + 1}`;
+  return indx;
 }
 export function removeMessageHandler(conn, key) {
-  delete conn.messageHandlersIndx[key];
+  console.log(`removing key ${key} from conn ${conn}`);
+  delete conn.messageHandlers[key];
 }
 
 export function sendMessage(conn, message) {

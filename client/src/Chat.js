@@ -25,6 +25,7 @@ export function Chat(props) {
       newMessage(JSON.stringify(m));
     });
     return () => {
+      console.log(`cleaning up chat!!! index ${indx}`);
       p2p.removeMessageHandler(props.connRef.current, indx);
     };
   }, [props.connRef]);
