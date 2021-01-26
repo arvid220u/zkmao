@@ -30,5 +30,3 @@ template AccessBit(numCards, base){
   bit <== sum[numCards];
 }
 component main = AccessBit(10, 3);
-
-
