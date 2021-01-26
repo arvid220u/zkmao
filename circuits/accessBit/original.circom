@@ -10,13 +10,13 @@ template AccessBit(numCards, base){
   quotients[0] <== number;
   signal bits[numCards];
   
-  assert (number < numCards);
+  assert (idx < numCards);
   for(var ii = 0; ii < numCards; ii++){
     component mod_ii = Modulo(100); // TODO: change this magic number!!!!
     mod_ii.n <== quotients[ii];
     mod_ii.m <== base;
     bits[ii] <== mod_ii.remainder;
-    quotient[ii + 1] <== mod_ii.remainder;
+    quotients[ii + 1] <== mod_ii.quotient;
   }
   quotients[numCards] === 0;
   signal sum[numCards + 1];

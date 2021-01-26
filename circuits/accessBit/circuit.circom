@@ -10,67 +10,67 @@ template AccessBit(numCards, base){
   quotients[0] <== number;
   signal bits[numCards];
   
-  assert (number < numCards);
+  assert (idx < numCards);
   
     component mod_0 = Modulo(100); // TODO: change this magic number!!!!
     mod_0.n <== quotients[0];
     mod_0.m <== base;
     bits[0] <== mod_0.remainder;
-    quotient[0 + 1] <== mod_0.remainder;
+    quotients[0 + 1] <== mod_0.quotient;
   
     component mod_1 = Modulo(100); // TODO: change this magic number!!!!
     mod_1.n <== quotients[1];
     mod_1.m <== base;
     bits[1] <== mod_1.remainder;
-    quotient[1 + 1] <== mod_1.remainder;
+    quotients[1 + 1] <== mod_1.quotient;
   
     component mod_2 = Modulo(100); // TODO: change this magic number!!!!
     mod_2.n <== quotients[2];
     mod_2.m <== base;
     bits[2] <== mod_2.remainder;
-    quotient[2 + 1] <== mod_2.remainder;
+    quotients[2 + 1] <== mod_2.quotient;
   
     component mod_3 = Modulo(100); // TODO: change this magic number!!!!
     mod_3.n <== quotients[3];
     mod_3.m <== base;
     bits[3] <== mod_3.remainder;
-    quotient[3 + 1] <== mod_3.remainder;
+    quotients[3 + 1] <== mod_3.quotient;
   
     component mod_4 = Modulo(100); // TODO: change this magic number!!!!
     mod_4.n <== quotients[4];
     mod_4.m <== base;
     bits[4] <== mod_4.remainder;
-    quotient[4 + 1] <== mod_4.remainder;
+    quotients[4 + 1] <== mod_4.quotient;
   
     component mod_5 = Modulo(100); // TODO: change this magic number!!!!
     mod_5.n <== quotients[5];
     mod_5.m <== base;
     bits[5] <== mod_5.remainder;
-    quotient[5 + 1] <== mod_5.remainder;
+    quotients[5 + 1] <== mod_5.quotient;
   
     component mod_6 = Modulo(100); // TODO: change this magic number!!!!
     mod_6.n <== quotients[6];
     mod_6.m <== base;
     bits[6] <== mod_6.remainder;
-    quotient[6 + 1] <== mod_6.remainder;
+    quotients[6 + 1] <== mod_6.quotient;
   
     component mod_7 = Modulo(100); // TODO: change this magic number!!!!
     mod_7.n <== quotients[7];
     mod_7.m <== base;
     bits[7] <== mod_7.remainder;
-    quotient[7 + 1] <== mod_7.remainder;
+    quotients[7 + 1] <== mod_7.quotient;
   
     component mod_8 = Modulo(100); // TODO: change this magic number!!!!
     mod_8.n <== quotients[8];
     mod_8.m <== base;
     bits[8] <== mod_8.remainder;
-    quotient[8 + 1] <== mod_8.remainder;
+    quotients[8 + 1] <== mod_8.quotient;
   
     component mod_9 = Modulo(100); // TODO: change this magic number!!!!
     mod_9.n <== quotients[9];
     mod_9.m <== base;
     bits[9] <== mod_9.remainder;
-    quotient[9 + 1] <== mod_9.remainder;
+    quotients[9 + 1] <== mod_9.quotient;
   
   quotients[numCards] === 0;
   signal sum[numCards + 1];
