@@ -55,11 +55,11 @@ export function createOffer(conn, setOffer) {
 }
 
 function encodeKey(json) {
-  return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/\=+$/, '');
+  return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 function decodeKey(key) {
   let str = key;
-  if (str.length % 4 != 0){
+  if (str.length % 4 !== 0){
     str += ('===').slice(0, 4 - (str.length % 4));
   }
   str = str.replace(/-/g, '+').replace(/_/g, '/');
