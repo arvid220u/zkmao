@@ -127,13 +127,22 @@ function App() {
   const [inSetup, setInSetup] = useState(true);
   const connRef = useRef();
 
+  const startGame = useCallback(() => {
+    setInSetup(false);
+    p2p.sendData(connRef.current, { method: "START" });
+  }, [connRef]);
+
   useEffect(() => {
     connRef.current = p2p.createConn();
   }, []);
 
-  const startGame = useCallback(() => {
-    setInSetup(false);
-    p2p.sendData(connRef.current, { method: "START" });
+  useEffect(() => {
+    const indx = p2p.addMessageHandler(connRef.current, (m) => {
+      if (m.type === "data" && m.method === "START") setInSetup(false);
+    });
+    return () => {
+      p2p.removeMessageHandler(connRef.current, indx);
+    };
   }, [connRef]);
 
   return (

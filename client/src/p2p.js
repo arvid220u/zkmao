@@ -13,7 +13,7 @@ export function createConn() {
   };
   conn.pc.ondatachannel = (e) => {
     conn.dc = e.channel;
-    conn.dc.onopen = onOpen;
+    conn.dc.onopen = () => onOpen(conn);
     conn.dc.onmessage = (e) => onMessage(conn, e);
   };
   conn.pc.oniceconnectionstatechange = (e) =>
@@ -21,8 +21,13 @@ export function createConn() {
   return conn;
 }
 
-function onOpen() {
+function onOpen(conn) {
   console.log("opened chat!!");
+  console.log(conn.messageHandlers);
+  const data = { type: "info", value: "successfully opened connection!!" };
+  for (const indx in conn.messageHandlers) {
+    conn.messageHandlers[indx](data);
+  }
 }
 function onMessage(conn, e) {
   console.log("received message!");
@@ -55,7 +60,7 @@ export function createOffer(conn, setOffer) {
   console.log(conn.pc.signalingState);
   conn.dc = conn.pc.createDataChannel("chat");
 
-  conn.dc.onopen = onOpen;
+  conn.dc.onopen = () => onOpen(conn);
   conn.dc.onmessage = (e) => onMessage(conn, e);
 
   conn.pc
