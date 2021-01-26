@@ -1,6 +1,6 @@
 import "./App.css";
 import React from "react";
-import { useRef, useEffect, useState } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
 
 import { Game } from "./Game.js";
@@ -131,11 +131,14 @@ function App() {
     connRef.current = p2p.createConn();
   }, []);
 
+  const startGame = useCallback(() => {
+    setInSetup(false);
+    p2p.sendData(connRef.current, { method: "START" });
+  }, [connRef]);
+
   return (
     <div className="App">
-      {inSetup && (
-        <Setup connRef={connRef} startGame={() => setInSetup(false)} />
-      )}
+      {inSetup && <Setup connRef={connRef} startGame={startGame} />}
       {!inSetup && <Game connRef={connRef} />}
     </div>
   );

@@ -20,9 +20,12 @@ export function Chat(props) {
   }
 
   useEffect(() => {
-    props.connRef.current.onMessage = (m) => newMessage(m.message);
+    const indx = p2p.addMessageHandler(props.connRef.current, (m) => {
+      if (m.type === "message") return newMessage(m.message);
+      newMessage(JSON.stringify(m));
+    });
     return () => {
-      props.connRef.current.onMessage = null;
+      p2p.removeMessageHandler(props.connRef.current, indx);
     };
   }, [props.connRef]);
 
