@@ -50,14 +50,26 @@ export function createOffer(conn, setOffer) {
 
   conn.pc.onicecandidate = (e) => {
     if (e.candidate) return;
-    setOffer(JSON.stringify(conn.pc.localDescription));
+    setOffer(encodeKey(JSON.stringify(conn.pc.localDescription)));
   }
+}
+
+function encodeKey(json) {
+  return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/\=+$/, '');
+}
+function decodeKey(key) {
+  let str = key;
+  if (str.length % 4 != 0){
+    str += ('===').slice(0, 4 - (str.length % 4));
+  }
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  return atob(str);
 }
 
 export function join(conn, joinKey, setAnswer) {
   console.log("join");
   console.log(conn.pc.signalingState);
-  let offerDesc = new RTCSessionDescription(JSON.parse(joinKey));
+  let offerDesc = new RTCSessionDescription(JSON.parse(decodeKey(joinKey)));
 
   conn.pc.setRemoteDescription(offerDesc)
     .then(() => conn.pc.createAnswer())
@@ -66,13 +78,13 @@ export function join(conn, joinKey, setAnswer) {
 
   conn.pc.onicecandidate = (e) => {
     if (e.candidate) return;
-    setAnswer(JSON.stringify(conn.pc.localDescription));
+    setAnswer(encodeKey(JSON.stringify(conn.pc.localDescription)));
   }
 }
 
 export function acceptAnswer(conn, joinKey) {
   console.log("join");
   console.log(conn.pc.signalingState);
-  var answerDesc = new RTCSessionDescription(JSON.parse(joinKey));
+  var answerDesc = new RTCSessionDescription(JSON.parse(decodeKey(joinKey)));
   conn.pc.setRemoteDescription(answerDesc).catch(console.log);
 }
