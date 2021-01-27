@@ -1,5 +1,9 @@
 // logic.js is intended to hold all game logic
 
+import * as p2p from "./p2p.js";
+
+import assert from "./assert.js";
+
 // what's the game state?
 // there's a public part and a private part
 // the public part needs to be agreed upon among all players
@@ -48,7 +52,7 @@
 // transitions
 // setup:
 //      state = {"preReady","sentReady","sentStart"},
-//      players, readyHashes, startNumbers
+//      players, readyHashes, startNumbers, myRandom
 //
 // play:
 //      nextTurn = user_id
@@ -61,28 +65,131 @@
 // abort:
 //      (no data)
 
-const PHASES = {
+const PHASE = {
   SETUP: "SETUP",
   PLAY: "PLAY",
   GAMEOVER: "GAMEOVER",
   ABORT: "ABORT",
 };
-const SETUP_STATES = {
+const PHASES = Object.values(PHASE);
+const SETUP_STATE = {
   PRE_READY: "PRE_READY",
   SENT_READY: "SENT_READY",
   SENT_START: "SENT_START",
 };
+const SETUP_STATES = Object.values(SETUP_STATE);
 
-export function createGame() {
+const METHOD = {
+  READY: "READY",
+  START: "START",
+  PLAY: "PLAY",
+  PLAYACK: "PLAYACK",
+  ABORT: "ABORT",
+};
+const METHODS = Object.values(METHOD);
+const METHOD_HANDLER = {
+  [METHOD.READY]: handleReadyMethod,
+  [METHOD.START]: handleStartMethod,
+  [METHOD.PLAY]: handlePlayMethod,
+  [METHOD.PLAYACK]: handlePlayAckMethod,
+  [METHOD.ABORT]: handleAbortMethod,
+};
+assert(
+  JSON.stringify(METHODS) === JSON.stringify(Object.keys(METHOD_HANDLER)),
+  {
+    methods: METHODS,
+    handlers: METHOD_HANDLER,
+  }
+);
+
+export function createGame(conn) {
   // TODO: generate private/public keypair here and let userId be the public key
-  let userId = Math.random().toString(36).substr(2, 9);
-  let game = {
-    phase: PHASES.SETUP,
+  const userId = Math.random().toString(36).substr(2, 9);
+  const game = {
+    conn,
+    phase: PHASE.SETUP,
     userId: userId,
-    state: SETUP_STATES.PRE_READY,
+    state: SETUP_STATE.PRE_READY,
     players: [userId],
     readyHashes: [],
     startNumbers: [],
+    myRandom: null,
   };
   return game;
+}
+
+// m should be on form {data: , method: , ...}
+export function receive(game, m) {
+  console.log("game receiving message!");
+  console.log(m);
+  if (m.type !== "data") {
+    console.log("ignoring non-data message");
+    return;
+  }
+  assert(METHODS.includes(m.method));
+  console.log(METHOD_HANDLER);
+  METHOD_HANDLER[m.method](game, m);
+}
+function send(game, m) {
+  // TODO: sign the message
+  m["from"] = game.userId;
+  p2p.sendData(game.conn, m);
+}
+
+function unimplemented() {
+  assert(false, "not implemented yet!!");
+}
+
+function handleReadyMethod(game, m) {
+  // should be in setup phase
+  if (game.phase !== PHASE.SETUP) abort(game);
+
+  console.log("handle ready message");
+  console.log(m);
+  unimplemented();
+}
+function handleStartMethod(game, m) {
+  unimplemented();
+}
+function handlePlayMethod(game, m) {
+  unimplemented();
+}
+function handlePlayAckMethod(game, m) {
+  unimplemented();
+}
+function handleAbortMethod(game, m) {
+  unimplemented();
+}
+
+function abort(game) {
+  console.log("ABORT GAME :((");
+  send(game, { method: METHOD.ABORT });
+  game.phase = PHASE.ABORT;
+}
+
+async function hash(message) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join(""); // convert bytes to hex string
+  return hashHex;
+}
+
+export async function sendReady(game) {
+  assert(
+    (game.phase === PHASE.SETUP && game.state === SETUP_STATE.PRE_READY) ||
+      game.phase === PHASE.GAMEOVER,
+    game
+  );
+  // generate a random number
+  game.myRandom = Math.floor(Math.random() * 2 ** 64);
+  // hash the random number
+  const hash_r = await hash(`${game.myRandom}`);
+  console.log(hash_r);
+  game.readyHashes.push(hash_r);
+  game.startNumbers.push(game.myRandom);
+  send(game, { method: METHOD.READY, hash: hash_r });
 }
