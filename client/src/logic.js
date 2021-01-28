@@ -40,7 +40,7 @@ import assert from "./assert.js";
 //  1.4 using same seed just choose order
 // 2. play:
 //  2.1 someone: PLAY card userID
-//  2.2 everyone else: PLAYACK card fromUser userID
+//  2.2 everyone else: PLAYACK card user userID
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
@@ -63,8 +63,11 @@ import assert from "./assert.js";
 //
 // play:
 //      nextTurn = index into players
-//      public: players (order matters), playedCards (0 bottom, n-1 top), playerHands (id -> array)
-//          invariant: union is good, disjoint
+//      players (order matters),
+//      playedCards (0 bottom, n-1 top),
+//      playerHands (id -> array),
+//      state = {"waitforplay", "waitforack"}
+//      acksReceived = []
 //
 // gameover: (transitions directly to setup.sentReady)
 //      winner = user_id
@@ -85,6 +88,11 @@ const SETUP_STATE = {
   SENT_START: "SENT_START",
 };
 const SETUP_STATES = Object.values(SETUP_STATE);
+const PLAY_STATE = {
+  WAIT_FOR_PLAY: "WAIT_FOR_PLAY",
+  WAIT_FOR_PLAYACK: "WAIT_FOR_PLAYACK",
+};
+const PLAY_STATES = Object.values(PLAY_STATE);
 
 const METHOD = {
   READY: "READY",
@@ -234,6 +242,7 @@ async function handleStartMethod(game, m) {
 }
 function handlePlayMethod(game, m) {
   if (game.phase !== PHASE.PLAY) abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAY) abort(game, "wrong state");
 
   const user = m.from;
   const card = m.card;
@@ -255,6 +264,8 @@ function handlePlayMethod(game, m) {
 
   // actually do the move
   actuallyPlayCard(game, user, card);
+
+  sendPlayAck(game, user, card);
 
   update(game);
 }
@@ -296,6 +307,7 @@ function actuallyPlayCard(game, user, card) {
     (c) => c.index !== card.index
   );
   game.nextTurn = (game.nextTurn + 1) % game.players.length;
+  game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
   update(game);
 }
 
@@ -309,6 +321,7 @@ function legalToPlayCard(game, card) {
 
 export function playCard(game, card) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
+  assert(game.state === PLAY_STATE.WAIT_FOR_PLAY, game);
   assert(
     game.playerHands[game.userId].some((c) => c.index === card.index),
     game
@@ -339,6 +352,33 @@ export async function sendReady(game) {
   send(game, { method: METHOD.READY, hash: hash_r });
   game.state = SETUP_STATE.SENT_READY;
   maybeSendStart(game);
+
+  update(game);
+}
+
+function maybeStopWaitingForAcks(game) {
+  if (game.acksReceived.length === game.players.length) {
+    game.state = PLAY_STATE.WAIT_FOR_PLAY;
+    game.acksReceived = [];
+    update(game);
+  }
+}
+
+function sendPlayAck(game, user, card) {
+  assert(
+    game.phase === PHASE.PLAY && game.state === PLAY_STATE.WAIT_FOR_PLAY,
+    game
+  );
+
+  // TODO: run the zk rule snarks to determine penalties
+
+  send(game, { method: METHOD.PLAYACK, card, user });
+
+  game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
+  assert(!game.acksReceived.includes(game.userId), game);
+  game.acksReceived.push(game.userId);
+
+  maybeStopWaitingForAcks(game);
 
   update(game);
 }
@@ -384,6 +424,10 @@ function startGame(game) {
     utils.shuffle(game.players, rng),
     rng
   );
+
+  game.state = PLAY_STATE.WAIT_FOR_PLAY;
+
+  game.acksReceived = [];
 
   // now we're done :))))))
   game.phase = PHASE.PLAY;
@@ -434,6 +478,9 @@ export function getMyHand(game) {
 export function getOppHand(game) {
   return game.playerHands[getOppUserId(game)];
 }
-export function isMyTurn(game) {
+function isMyTurn(game) {
   return getMyUserId(game) === game.players[game.nextTurn];
+}
+export function isMyTurnEnabled(game) {
+  return isMyTurn(game) && game.state === PLAY_STATE.WAIT_FOR_PLAY;
 }

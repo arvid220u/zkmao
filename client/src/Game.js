@@ -58,7 +58,7 @@ function Play(props) {
         selectedCard={selectedCard}
       />
       <PlayButton
-        myTurn={logic.isMyTurn(props.gameRef.current)}
+        myTurn={logic.isMyTurnEnabled(props.gameRef.current)}
         play={() =>
           logic.playCard(
             props.gameRef.current,
