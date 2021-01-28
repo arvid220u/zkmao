@@ -130,6 +130,11 @@ export function createGame(conn) {
     userId: userId,
     phase: null,
     data: {}, // contains data for every phase
+
+    // rule data
+    myRules: [],
+    allRules: [],
+    rulesByOwner: [],
   };
   for (const phase of PHASES) {
     game.data[phase] = {};
@@ -218,10 +223,6 @@ function send(game, m) {
   p2p.sendData(game.conn, m);
 }
 
-function unimplemented() {
-  assert(false, "not implemented yet!!");
-}
-
 function handleReadyMethod(game, m) {
   // should be in setup phase, or gameover phase
   if (!(game.phase === PHASE.SETUP || game.phase === PHASE.GAMEOVER))
@@ -275,7 +276,7 @@ async function handleStartMethod(game, m) {
   if (!data.players.includes(user)) return abort(game, `unknown user ${user}`);
 
   // assert that the hash is ok
-  const randomNumberHash = await hash(`${randomNumber}`);
+  const randomNumberHash = await utils.hash(`${randomNumber}`);
   if (data.readyHashes[user] !== randomNumberHash)
     return abort(
       game,
@@ -356,7 +357,7 @@ function handlePlayAckMethod(game, m) {
 }
 function handleAbortMethod(game, m) {
   console.log("ABORTING :(((( SAD");
-  unimplemented();
+  utils.unimplemented();
 
   update(game);
 }
@@ -368,17 +369,6 @@ function abort(game, reason) {
   game.phase = PHASE.ABORT;
 
   update(game);
-}
-
-async function hash(message) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join(""); // convert bytes to hex string
-  return hashHex;
 }
 
 function actuallyPlayCard(game, user, card) {
@@ -440,7 +430,7 @@ export async function sendReady(game) {
   // generate a random number
   data.myRandom = Math.floor(Math.random() * 2 ** 64);
   // hash the random number
-  const hash_r = await hash(`${data.myRandom}`);
+  const hash_r = await utils.hash(`${data.myRandom}`);
   console.log(hash_r);
   data.readyHashes[game.userId] = hash_r;
   send(game, { method: METHOD.READY, hash: hash_r });
