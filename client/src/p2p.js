@@ -113,3 +113,8 @@ export function acceptAnswer(conn, joinKey) {
   var answerDesc = new RTCSessionDescription(JSON.parse(decodeKey(joinKey)));
   conn.pc.setRemoteDescription(answerDesc).catch(console.log);
 }
+
+export function numConnections(conn) {
+  // TODO: update this for many players
+  return 1;
+}

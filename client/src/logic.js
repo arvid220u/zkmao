@@ -111,8 +111,8 @@ export function createGame(conn) {
     userId: userId,
     state: SETUP_STATE.PRE_READY,
     players: [userId],
-    readyHashes: [],
-    startNumbers: [],
+    readyHashes: {},
+    startNumbers: {},
     myRandom: null,
   };
   return game;
@@ -143,10 +143,26 @@ function unimplemented() {
 function handleReadyMethod(game, m) {
   // should be in setup phase
   if (game.phase !== PHASE.SETUP) abort(game);
+  // should not have sent start already
+  if (
+    !(
+      game.state === SETUP_STATE.PRE_READY ||
+      game.state === SETUP_STATE.SENT_READY
+    )
+  )
+    abort(game);
 
-  console.log("handle ready message");
-  console.log(m);
-  unimplemented();
+  const user = m.from;
+  const hash = m.hash;
+
+  // shouldn't receive twice; should have different IDs
+  if (game.players.includes(user)) abort(game);
+
+  game.players.push(user);
+  game.readyHashes[user] = hash;
+
+  // if we have received all, send start
+  maybeSendStart(game);
 }
 function handleStartMethod(game, m) {
   unimplemented();
@@ -189,7 +205,30 @@ export async function sendReady(game) {
   // hash the random number
   const hash_r = await hash(`${game.myRandom}`);
   console.log(hash_r);
-  game.readyHashes.push(hash_r);
-  game.startNumbers.push(game.myRandom);
+  game.readyHashes[game.userId] = hash_r;
+  game.startNumbers[game.userId] = game.myRandom;
   send(game, { method: METHOD.READY, hash: hash_r });
+  game.state = SETUP_STATE.SENT_READY;
+  maybeSendStart(game);
+}
+
+function maybeSendStart(game) {
+  if (
+    p2p.numConnections(game.conn) ===
+    Object.keys(game.readyHashes).length - 1
+  ) {
+    assert(game.players.length === Object.keys(game.readyHashes).length, game);
+    sendStart(game);
+  }
+}
+
+function sendStart(game) {
+  assert(
+    game.phase === PHASE.SETUP && game.state === SETUP_STATE.SENT_READY,
+    game
+  );
+
+  send(game, { method: METHOD.START, randomNumber: game.myRandom });
+
+  game.state = SETUP_STATE.SENT_START;
 }
