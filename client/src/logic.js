@@ -41,8 +41,8 @@ import assert from "./assert.js";
 //  1.3 when received all STARTs: verifies all hashes, xors all numbers, seed rng with this, then just pick cards
 //  1.4 using same seed just choose order
 // 2. play:
-//  2.1 someone: PLAY card userID
-//  2.2 everyone else: PLAYACK card user userID
+//  2.1 someone: PLAY card userID rules
+//  2.2 everyone else: PLAYACK card user userID penalty provedRules (rulehash, snark proof, for each rule you know)
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
@@ -422,7 +422,7 @@ function legalToPlayCard(game, card) {
   return lastCard.suit === card.suit || lastCard.rank === card.rank;
 }
 
-export function playCard(game, card) {
+export function playCard(game, card, selectedRules) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAY, game);
@@ -431,12 +431,18 @@ export function playCard(game, card) {
       data.playerHands[game.userId].some((c) => cards.sameCard(c, card)),
     game
   );
+  assert(
+    selectedRules.every(
+      (rule) => game.allRules.filter((x) => rules.sameRule(x, rule)) > 0
+    )
+  );
   console.log(`play card!`);
   console.log(card);
+  console.log(selectedRules);
 
   assert(legalToPlayCard(game, card), game);
 
-  send(game, { method: METHOD.PLAY, card });
+  send(game, { method: METHOD.PLAY, card, rules: selectedRules });
 
   actuallyPlayCard(game, game.userId, card);
   update(game);

@@ -83,15 +83,16 @@ function Play(props) {
       <PlayButton
         disabled={!myTurn || props.disabled}
         play={() => {
-          setSelectedRules([]);
           logic.playCard(
             props.gameRef.current,
-            cards.deserializeCard(selectedCard)
+            cards.deserializeCard(selectedCard),
+            selectedRules
           );
+          setSelectedRules([]);
         }}
         pass={() => {
+          logic.playCard(props.gameRef.current, cards.VOID_CARD, selectedRules);
           setSelectedRules([]);
-          logic.playCard(props.gameRef.current, cards.VOID_CARD);
         }}
       />
     </div>
