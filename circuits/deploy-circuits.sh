@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-destination="../client/public/circuits"
+destination="../client/src/circuits"
 echo "removing old files"
 rm -r "$destination"
 mkdir "$destination"
