@@ -30,6 +30,8 @@ function Play(props) {
     setPlayedCards(props.gameRef.current.playedCards);
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));
+    setMyUserId(logic.getMyUserId(props.gameRef.current));
+    setOppUserId(logic.getOppUserId(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -53,8 +55,7 @@ function Play(props) {
 function PlayedCards(props) {
   return (
     <div>
-      played cards:{" "}
-      {props.cards.length === 0 ? "(none)" : cards.serializeDeck(props.cards)}
+      played cards: <Deck cards={props.cards} />
     </div>
   );
 }
@@ -69,18 +70,23 @@ function Hand(props) {
 }
 
 function Deck(props) {
+  if (props.cards.length === 0) {
+    return <div>(none)</div>;
+  }
   return (
-    <div style={{ fontSize: "3em" }}>
-      {props.cards.length === 0 ? "(none)" : cards.serializeDeck(props.cards)}
-    </div>
+    <div style={{ fontSize: "3em" }}>{cards.serializeDeck(props.cards)}</div>
   );
 }
 
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
+  const [myUserId, setMyUserId] = useState(
+    logic.getMyUserId(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setPhase(props.gameRef.current.phase);
+    setMyUserId(logic.getMyUserId(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -92,7 +98,7 @@ export function Game(props) {
 
   return (
     <div>
-      welcome to the game good sir!
+      welcome to the game, {myUserId}!
       <hr />
       {phase === logic.PHASE.SETUP && <Setup />}
       {phase === logic.PHASE.PLAY && <Play gameRef={props.gameRef} />}
