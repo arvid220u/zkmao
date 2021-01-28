@@ -8,16 +8,20 @@ import * as utils from "./utils.js";
 //  if it is private, also contains:
 //  - source: (the human readable source code written a cool language)
 //  - compiled: (a list of integers which is the compiled version for the snark)
+//  - owner: (the user id of the user owning the rule, or "everyone")
 
 // the game will store:
 //  - myRules: a list of my private rules
 //  - allRules: a list of all known public rules
 //  - rulesByOwner: a map {user -> ownedRule}. because if initial rules it is ok for multiple people to know the same rule
 
-export function createPrivateRule(name, source) {
+export const EVERYONE = "everyone";
+
+export function createPrivateRule(name, source, owner) {
   const rule = {
     name,
     source,
+    owner,
     compiled: compileSource(source),
     hash: null,
   };
@@ -29,6 +33,7 @@ export function publicRule(rule) {
   const publicRule = {
     name: rule.name,
     hash: rule.hash,
+    owner: rule.owner,
   };
   return publicRule;
 }

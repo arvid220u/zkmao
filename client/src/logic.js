@@ -6,6 +6,7 @@ import * as p2p from "./p2p.js";
 import * as utils from "./utils.js";
 import * as cards from "./cards.js";
 import * as config from "./config.js";
+import * as rules from "./rules.js";
 
 import assert from "./assert.js";
 
@@ -134,13 +135,24 @@ export function createGame(conn) {
     // rule data
     myRules: [],
     allRules: [],
-    rulesByOwner: [],
   };
   for (const phase of PHASES) {
     game.data[phase] = {};
   }
   initPhase(game, PHASE.SETUP);
+  setUpPublicRules(game);
   return game;
+}
+function setUpPublicRules(game) {
+  // TODO: add more public rules
+  const rule = rules.createPrivateRule(
+    "spades",
+    "card.suit == spades",
+    rules.EVERYONE
+  );
+  game.myRules.push(rule);
+  const publicRule = rules.publicRule(rule);
+  game.allRules.push(publicRule);
 }
 function resetPhase(game, phase, args) {
   assert(PHASES.includes(phase), game);
