@@ -2,6 +2,7 @@ import "./App.css";
 import React from "react";
 import { useCallback, useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
+import * as logic from "./logic.js";
 
 import { Game } from "./Game.js";
 import { Chat } from "./Chat.js";
@@ -126,29 +127,31 @@ function Setup(props) {
 function App() {
   const [inSetup, setInSetup] = useState(true);
   const connRef = useRef();
+  const gameRef = useRef();
 
   const startGame = useCallback(() => {
     setInSetup(false);
-    p2p.sendData(connRef.current, { method: "START" });
-  }, [connRef]);
+    logic.sendReady(gameRef.current);
+  }, [gameRef]);
 
   useEffect(() => {
     connRef.current = p2p.createConn();
+    gameRef.current = logic.createGame(connRef.current);
   }, []);
 
   useEffect(() => {
-    const indx = p2p.addMessageHandler(connRef.current, (m) => {
-      if (m.type === "data" && m.method === "START") setInSetup(false);
-    });
+    const indx = p2p.addMessageHandler(connRef.current, (m) =>
+      logic.receive(gameRef.current, m)
+    );
     return () => {
       p2p.removeMessageHandler(connRef.current, indx);
     };
-  }, [connRef]);
+  }, [connRef, gameRef]);
 
   return (
     <div className="App">
       {inSetup && <Setup connRef={connRef} startGame={startGame} />}
-      {!inSetup && <Game connRef={connRef} />}
+      {!inSetup && <Game connRef={connRef} gameRef={gameRef} />}
     </div>
   );
 }
