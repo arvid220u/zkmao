@@ -70,5 +70,4 @@ if __name__ == "__main__":
     state = {}
     for i in range(1, len(sys.argv)//2):
         state[sys.argv[2 * i ]] = int(sys.argv[2 * i + 1])
-
     main(file_name, state)
