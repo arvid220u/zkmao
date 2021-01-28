@@ -17,7 +17,7 @@ import * as utils from "./utils.js";
 
 export const EVERYONE = "everyone";
 
-export function createPrivateRule(name, source, owner) {
+export async function createPrivateRule(name, source, owner) {
   const rule = {
     name,
     source,
@@ -25,15 +25,15 @@ export function createPrivateRule(name, source, owner) {
     compiled: compileSource(source),
     hash: null,
   };
-  rule.hash = hashCompiledSource(rule.compiled);
+  rule.hash = await hashCompiledSource(rule.compiled);
   return rule;
 }
 export function publicRule(rule) {
   // strip out the private parts of this rule, before publishing it to anyone else
   const publicRule = {
     name: rule.name,
-    hash: rule.hash,
     owner: rule.owner,
+    hash: rule.hash,
   };
   return publicRule;
 }
@@ -47,7 +47,7 @@ function compileSource(source) {
   return [1, 1, 1, 1, 1, 1];
 }
 // TODO: implement this
-function hashCompiledSource(compiled) {
+async function hashCompiledSource(compiled) {
   // should hash in the same way as the snark is doing
-  return utils.hash(JSON.stringify(compiled));
+  return await utils.hash(JSON.stringify(compiled));
 }

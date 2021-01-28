@@ -145,14 +145,14 @@ export function createGame(conn) {
 }
 function setUpPublicRules(game) {
   // TODO: add more public rules
-  const rule = rules.createPrivateRule(
-    "spades",
-    "card.suit == spades",
-    rules.EVERYONE
-  );
-  game.myRules.push(rule);
-  const publicRule = rules.publicRule(rule);
-  game.allRules.push(publicRule);
+  rules
+    .createPrivateRule("spades", "card.suit == spades", rules.EVERYONE)
+    .then((rule) => {
+      game.myRules.push(rule);
+      const publicRule = rules.publicRule(rule);
+      game.allRules.push(publicRule);
+      update(game);
+    });
 }
 function resetPhase(game, phase, args) {
   assert(PHASES.includes(phase), game);
@@ -602,4 +602,8 @@ export function getPlayedCards(game) {
 export function getWinner(game) {
   const data = game.data[PHASE.GAMEOVER];
   return data.winner;
+}
+
+export function getRules(game) {
+  return game.allRules;
 }

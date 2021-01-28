@@ -51,8 +51,6 @@ function Play(props) {
 
   return (
     <div>
-      {props.disabled || "Playing the game!!!"}
-      <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
       <MyHand
@@ -168,6 +166,32 @@ function GameOver(props) {
   );
 }
 
+function Rules(props) {
+  const [rules, setRules] = useState(logic.getRules(props.gameRef.current));
+
+  const updateGameState = useCallback(() => {
+    setRules(logic.getRules(props.gameRef.current));
+  }, [props.gameRef]);
+
+  useEffect(() => {
+    const indx = logic.addListener(props.gameRef.current, updateGameState);
+    return () => {
+      logic.removeListener(props.gameRef.current, indx);
+    };
+  }, [props.gameRef, updateGameState]);
+
+  return (
+    <div>
+      Rules:
+      <ul>
+        {rules.map((rule) => {
+          return <li>{JSON.stringify(rule)}</li>;
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
@@ -191,19 +215,31 @@ export function Game(props) {
       welcome to the game, {myUserId}!
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
-        <GameOver
-          gameRef={props.gameRef}
-          winner={logic.getWinner(props.gameRef.current)}
-        />
+        <React.Fragment>
+          <GameOver
+            gameRef={props.gameRef}
+            winner={logic.getWinner(props.gameRef.current)}
+          />
+          <hr />
+        </React.Fragment>
       )}
-      {phase === logic.PHASE.SETUP && <Setup />}
-      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
-        <Play
-          gameRef={props.gameRef}
-          disabled={phase === logic.PHASE.GAMEOVER}
-        />
+      {phase === logic.PHASE.SETUP && (
+        <React.Fragment>
+          <Setup />
+          <hr />
+        </React.Fragment>
       )}
+      <Rules gameRef={props.gameRef} />
       <hr />
+      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
+        <React.Fragment>
+          <Play
+            gameRef={props.gameRef}
+            disabled={phase === logic.PHASE.GAMEOVER}
+          />
+          <hr />
+        </React.Fragment>
+      )}
       <Chat connRef={props.connRef} />
     </div>
   );
