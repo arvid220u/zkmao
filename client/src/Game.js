@@ -96,28 +96,31 @@ function Play(props) {
 
 function SelectRule(props) {
   return (
-    <div className="SelectRule">
-      {props.rules.map((rule, index) => {
-        return (
-          <React.Fragment key={`rulesfragment${index}`}>
-            <input
-              type="checkbox"
-              name="rules"
-              value={JSON.stringify(rule)}
-              checked={
-                props.selectedRules.filter((x) => rules.sameRule(x, rule))
-                  .length > 0
-              }
-              onChange={props.toggleRule}
-              id={rule.hash}
-              key={`rulesradio${index}`}
-            />
-            <label htmlFor={rule.hash} key={`ruleslabel${index}`}>
-              {rule.name}
-            </label>
-          </React.Fragment>
-        );
-      })}
+    <div style={{ marginTop: "5px", marginBottom: "7px" }}>
+      rules:
+      <div className="SelectRule">
+        {props.rules.map((rule, index) => {
+          return (
+            <React.Fragment key={`rulesfragment${index}`}>
+              <input
+                type="checkbox"
+                name="rules"
+                value={JSON.stringify(rule)}
+                checked={
+                  props.selectedRules.filter((x) => rules.sameRule(x, rule))
+                    .length > 0
+                }
+                onChange={props.toggleRule}
+                id={rule.hash}
+                key={`rulesradio${index}`}
+              />
+              <label htmlFor={rule.hash} key={`ruleslabel${index}`}>
+                {rule.name}
+              </label>
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }
