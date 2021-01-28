@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-declare -a arr=("exponentiate" "ithk" "modulo" "random" "drawcardspublicly" "accessBit")
+declare -a arr=("exponentiate" "ithk" "modulo" "random" "drawcardspublicly" "accessBit" "accessBitMao10" "accessBitMao20")
 
 for i in "${arr[@]}"
 do
