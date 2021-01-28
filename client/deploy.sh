@@ -5,6 +5,7 @@ function checkout_web {
 }
 
 GIT_HASH=$(git rev-parse --short HEAD)
+BRANCH=$(git branch --show-current)
 
 npm run build
 if ! checkout_web; then
@@ -16,5 +17,5 @@ echo $GIT_HASH > version.txt
 git add .
 git c -m "publish site :) $GIT_HASH"
 git push
-git checkout main
+git checkout $BRANCH
 echo "version: $GIT_HASH"
