@@ -13,7 +13,7 @@ function Setup() {
 
 function Play(props) {
   const [playedCards, setPlayedCards] = useState(
-    props.gameRef.current.playedCards
+    logic.getPlayedCards(props.gameRef.current)
   );
   const [myHand, setMyHand] = useState(logic.getMyHand(props.gameRef.current));
   const [oppHand, setOppHand] = useState(
@@ -34,7 +34,7 @@ function Play(props) {
   }, []);
 
   const updateGameState = useCallback(() => {
-    setPlayedCards(props.gameRef.current.playedCards);
+    setPlayedCards(logic.getPlayedCards(props.gameRef.current));
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));
     setMyUserId(logic.getMyUserId(props.gameRef.current));
@@ -157,7 +157,14 @@ function SelectableDeck(props) {
 
 function GameOver(props) {
   return (
-    <div style={{ fontSize: "2em" }}>Game is over!!!! {props.winner} won!</div>
+    <div>
+      <div style={{ fontSize: "2em" }}>
+        Game is over!!!! {props.winner} won!
+      </div>
+      <button onClick={() => logic.restartGame(props.gameRef.current)}>
+        Play again!
+      </button>
+    </div>
   );
 }
 
@@ -186,7 +193,7 @@ export function Game(props) {
       {phase === logic.PHASE.GAMEOVER && (
         <GameOver
           gameRef={props.gameRef}
-          winner={props.gameRef.current.winner}
+          winner={logic.getWinner(props.gameRef.current)}
         />
       )}
       {phase === logic.PHASE.SETUP && <Setup />}
