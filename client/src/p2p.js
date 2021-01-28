@@ -4,6 +4,10 @@ const RTC_CONFIG = {
   ],
 };
 
+var haveGum = navigator.mediaDevices
+  .getUserMedia({ video: true, audio: true })
+  .catch(console.log);
+
 export function createConn() {
   let conn = {
     pc: new RTCPeerConnection(RTC_CONFIG),
@@ -67,8 +71,10 @@ export function createOffer(conn, setOffer) {
   conn.dc.onopen = () => onOpen(conn);
   conn.dc.onmessage = (e) => onMessage(conn, e);
 
-  conn.pc
-    .createOffer()
+  haveGum
+    .then(() => conn.pc.createOffer())
+    // conn.pc
+    //   .createOffer()
     .then((d) => conn.pc.setLocalDescription(d))
     .catch(console.log);
 
