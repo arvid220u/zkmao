@@ -91,6 +91,9 @@ export function serializeCard(card) {
     )
   );
 }
+export function serializeCardASCII(card) {
+  return card.rank + card.suit.charAt(0).toUpperCase();
+}
 
 export function serializeDeck(deck) {
   let deckstr = "";

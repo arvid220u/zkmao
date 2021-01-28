@@ -1,4 +1,4 @@
-import "./App.css";
+import "./Game.css";
 import React from "react";
 import { useCallback, useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
@@ -47,7 +47,7 @@ function Play(props) {
       <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
-      <Hand cards={myHand} user={myUserId} />
+      <MyHand cards={myHand} user={myUserId} />
     </div>
   );
 }
@@ -68,13 +68,50 @@ function Hand(props) {
     </div>
   );
 }
-
+function MyHand(props) {
+  return (
+    <div>
+      my cards:
+      <SelectableDeck cards={props.cards} />
+    </div>
+  );
+}
 function Deck(props) {
   if (props.cards.length === 0) {
     return <div>(none)</div>;
   }
   return (
     <div style={{ fontSize: "3em" }}>{cards.serializeDeck(props.cards)}</div>
+  );
+}
+function SelectableDeck(props) {
+  const [selectedCard, setSelectedCard] = useState(null);
+  const changeCard = useCallback((e) => {
+    setSelectedCard(e.currentTarget.value);
+  });
+  if (props.cards.length === 0) {
+    return <div>(none)</div>;
+  }
+  return (
+    <div style={{ fontSize: "3em" }} class="SelectableDeck">
+      {props.cards.map((card) => {
+        return (
+          <React.Fragment>
+            <input
+              type="radio"
+              name="mycards"
+              value={cards.serializeCard(card)}
+              checked={selectedCard === cards.serializeCard(card)}
+              onChange={changeCard}
+              id={cards.serializeCardASCII(card)}
+            />
+            <label for={cards.serializeCardASCII(card)}>
+              {cards.serializeCard(card)}
+            </label>
+          </React.Fragment>
+        );
+      })}
+    </div>
   );
 }
 
