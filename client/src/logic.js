@@ -357,7 +357,8 @@ export async function sendReady(game) {
 }
 
 function maybeStopWaitingForAcks(game) {
-  if (game.acksReceived.length === game.players.length) {
+  // everyone except the player needs to ack the card
+  if (game.acksReceived.length === game.players.length - 1) {
     game.state = PLAY_STATE.WAIT_FOR_PLAY;
     game.acksReceived = [];
     update(game);
@@ -366,7 +367,7 @@ function maybeStopWaitingForAcks(game) {
 
 function sendPlayAck(game, user, card) {
   assert(
-    game.phase === PHASE.PLAY && game.state === PLAY_STATE.WAIT_FOR_PLAY,
+    game.phase === PHASE.PLAY && game.state === PLAY_STATE.WAIT_FOR_PLAYACK,
     game
   );
 
@@ -374,7 +375,6 @@ function sendPlayAck(game, user, card) {
 
   send(game, { method: METHOD.PLAYACK, card, user });
 
-  game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
   assert(!game.acksReceived.includes(game.userId), game);
   game.acksReceived.push(game.userId);
 
