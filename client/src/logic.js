@@ -41,8 +41,8 @@ import assert from "./assert.js";
 //  1.3 when received all STARTs: verifies all hashes, xors all numbers, seed rng with this, then just pick cards
 //  1.4 using same seed just choose order
 // 2. play:
-//  2.1 someone: PLAY card userID rules
-//  2.2 everyone else: PLAYACK card user userID penalty provedRules (rulehash, snark proof, for each rule you know)
+//  2.1 someone: PLAY card userID rules provedRules (same as for playack, need to show you enforce rules consistently even for yourself)
+//  2.2 everyone else: PLAYACK card user userID provedRules (rulehash, snark proof, for each rule you know)
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
@@ -324,6 +324,7 @@ function handlePlayMethod(game, m) {
 
   const user = m.from;
   const card = m.card;
+  const selectedRules = m.rules;
 
   // make sure it is this user's turn
   if (user !== data.players[data.nextTurn]) {
@@ -346,7 +347,7 @@ function handlePlayMethod(game, m) {
   // actually do the move
   actuallyPlayCard(game, user, card);
 
-  sendPlayAck(game, user, card);
+  sendPlayAck(game, user, card, selectedRules);
 
   update(game);
 }
@@ -442,7 +443,17 @@ export function playCard(game, card, selectedRules) {
 
   assert(legalToPlayCard(game, card), game);
 
-  send(game, { method: METHOD.PLAY, card, rules: selectedRules });
+  // we do this for ourselves. we need to run the snarks
+  // to prove to others that we enforce our own rules correctly even on ourselves
+  const provedRules = rules.determinePenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    game.myRules
+  );
+  // TODO: record how many penalties were received (probably 0 lol u should know your own rules)
+
+  send(game, { method: METHOD.PLAY, card, rules: selectedRules, provedRules });
 
   actuallyPlayCard(game, game.userId, card);
   update(game);
@@ -507,14 +518,20 @@ function maybeStopWaitingForAcks(game) {
   }
 }
 
-function sendPlayAck(game, user, card) {
+function sendPlayAck(game, user, card, selectedRules) {
   assert(game.phase === PHASE.PLAY, game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAYACK, game);
 
-  // TODO: run the zk rule snarks to determine penalties
+  const provedRules = rules.determinePenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    game.myRules
+  );
+  // TODO: record how many penalties were received
 
-  send(game, { method: METHOD.PLAYACK, card, user });
+  send(game, { method: METHOD.PLAYACK, card, user, provedRules });
 
   assert(!data.acksReceived.includes(game.userId), game);
   data.acksReceived.push(game.userId);

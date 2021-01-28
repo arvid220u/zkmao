@@ -55,3 +55,24 @@ async function hashCompiledSource(compiled) {
 export function sameRule(r1, r2) {
   return r1.hash === r2.hash;
 }
+
+// input:
+//  - card: the card that was played
+//  - playedCards: the cards that have been played so far, not including `card`, 0 is oldest and n-1 is most recently played
+//  - selectedRules: the rules that the player playing `card` selected
+//  - myRules: the private rules (including source code) that we know of and want to check for
+// output:
+//  - a list `provedRules` of length myRules.length, such that provedRules[i] is an object on the form:
+//      {rule: (publicrule object), proof: (snarkproof), penalty: (0 or 1)}
+//    where `rule` is the public rule version of each rule in `myRules`
+export function determinePenalties(card, playedCards, selectedRules, myRules) {
+  // TODO: implement this
+
+  return myRules.map((rule) => {
+    return {
+      rule: publicRule(rule),
+      proof: "this is supposed to be a snark proof",
+      penalty: 0,
+    };
+  });
+}
