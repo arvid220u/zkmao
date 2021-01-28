@@ -358,3 +358,19 @@ function sendStart(game) {
 
   update(game);
 }
+
+// convenience for 2 players
+// TODO: update this for more players
+
+export function getMyUserId(game) {
+  return game.userId;
+}
+export function getOppUserId(game) {
+  return game.players.filter((x) => x !== getMyUserId(game))[0];
+}
+export function getMyHand(game) {
+  return game.playerHands[getMyUserId(game)];
+}
+export function getOppHand(game) {
+  return game.playerHands[getOppUserId(game)];
+}

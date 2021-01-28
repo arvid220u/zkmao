@@ -15,23 +15,41 @@ export const RANK = {
   QUEEN: "Q",
   KING: "K",
 };
-export const RANKS = Object.values(RANK);
+export const RANKS = [
+  RANK.ACE,
+  RANK.TWO,
+  RANK.THREE,
+  RANK.FOUR,
+  RANK.FIVE,
+  RANK.SIX,
+  RANK.SEVEN,
+  RANK.EIGHT,
+  RANK.NINE,
+  RANK.TEN,
+  RANK.JACK,
+  RANK.QUEEN,
+  RANK.KING,
+]; // dont do Object.values because we want to guarantee order
 export const SUIT = {
   SPADES: "spades",
-  CLUBS: "clubs",
-  DIAMONDS: "diamonds",
   HEARTS: "hearts",
+  DIAMONDS: "diamonds",
+  CLUBS: "clubs",
 };
-export const SUITS = Object.values(SUIT);
+export const SUITS = [SUIT.SPADES, SUIT.HEARTS, SUIT.DIAMONDS, SUIT.CLUBS]; // dont do Object.values because we want to guarantee order
 
 //      card is represented by {rank:, suit:} (why no types :(((()))))
 
 export function orderedDeck() {
   let deck = [];
-  for (const rank of RANKS) {
-    for (const suit of SUITS) {
-      deck.push({ rank, suit });
+  let suit_index = 0;
+  for (const suit of SUITS) {
+    let rank_index = 0;
+    for (const rank of RANKS) {
+      deck.push({ rank, suit, rank_index, suit_index });
+      rank_index++;
     }
+    suit_index++;
   }
   return deck;
 }
@@ -57,4 +75,27 @@ export function dealShuffledCards(users, rng) {
     }
   }
   return cards;
+}
+
+export function serializeCard(card) {
+  const aceOfSpades = "🂡";
+  const firstChar = aceOfSpades.charCodeAt(0);
+  const secondChar = aceOfSpades.charCodeAt(1);
+  return (
+    String.fromCharCode(firstChar) +
+    String.fromCharCode(
+      secondChar +
+        card.rank_index +
+        card.suit_index * 16 +
+        (card.rank === RANK.QUEEN || card.rank === RANK.KING ? 1 : 0)
+    )
+  );
+}
+
+export function serializeDeck(deck) {
+  let deckstr = "";
+  for (const card of deck) {
+    deckstr += serializeCard(card);
+  }
+  return deckstr;
 }

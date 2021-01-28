@@ -3,6 +3,7 @@ import React from "react";
 import { useCallback, useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
 import * as logic from "./logic.js";
+import * as cards from "./cards.js";
 
 import { Chat } from "./Chat.js";
 
@@ -10,8 +11,69 @@ function Setup() {
   return <div>Waiting for everyone else to press start...</div>;
 }
 
-function Play() {
-  return <div>Playing the game!!!</div>;
+function Play(props) {
+  const [playedCards, setPlayedCards] = useState(
+    props.gameRef.current.playedCards
+  );
+  const [myHand, setMyHand] = useState(logic.getMyHand(props.gameRef.current));
+  const [oppHand, setOppHand] = useState(
+    logic.getOppHand(props.gameRef.current)
+  );
+  const [myUserId, setMyUserId] = useState(
+    logic.getMyUserId(props.gameRef.current)
+  );
+  const [oppUserId, setOppUserId] = useState(
+    logic.getOppUserId(props.gameRef.current)
+  );
+
+  const updateGameState = useCallback(() => {
+    setPlayedCards(props.gameRef.current.playedCards);
+    setMyHand(logic.getMyHand(props.gameRef.current));
+    setOppHand(logic.getOppHand(props.gameRef.current));
+  }, [props.gameRef]);
+
+  useEffect(() => {
+    const indx = logic.addListener(props.gameRef.current, updateGameState);
+    return () => {
+      logic.removeListener(props.gameRef.current, indx);
+    };
+  }, [props.gameRef, updateGameState]);
+
+  return (
+    <div>
+      Playing the game!!!
+      <hr />
+      <Hand cards={oppHand} user={oppUserId} />
+      <PlayedCards cards={playedCards} />
+      <Hand cards={myHand} user={myUserId} />
+    </div>
+  );
+}
+
+function PlayedCards(props) {
+  return (
+    <div>
+      played cards:{" "}
+      {props.cards.length === 0 ? "(none)" : cards.serializeDeck(props.cards)}
+    </div>
+  );
+}
+
+function Hand(props) {
+  return (
+    <div>
+      {props.user}'s cards:
+      <Deck cards={props.cards} />
+    </div>
+  );
+}
+
+function Deck(props) {
+  return (
+    <div style={{ fontSize: "3em" }}>
+      {props.cards.length === 0 ? "(none)" : cards.serializeDeck(props.cards)}
+    </div>
+  );
 }
 
 export function Game(props) {
@@ -26,7 +88,7 @@ export function Game(props) {
     return () => {
       logic.removeListener(props.gameRef.current, indx);
     };
-  }, [props.gameRef]);
+  }, [props.gameRef, updateGameState]);
 
   return (
     <div>
