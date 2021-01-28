@@ -5,6 +5,7 @@ import seedrandom from "seedrandom";
 import * as p2p from "./p2p.js";
 import * as utils from "./utils.js";
 import * as cards from "./cards.js";
+import * as config from "./config.js";
 
 import assert from "./assert.js";
 
@@ -461,7 +462,8 @@ function startGame(game) {
   // now deal cards
   game.playerHands = cards.dealShuffledCards(
     utils.shuffle(game.players, rng),
-    rng
+    rng,
+    config.START_FROM_RANK
   );
 
   game.state = PLAY_STATE.WAIT_FOR_PLAY;
