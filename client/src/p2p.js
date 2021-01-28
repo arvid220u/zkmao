@@ -49,6 +49,7 @@ export function addMessageHandler(conn, handler) {
   return indx;
 }
 export function removeMessageHandler(conn, key) {
+  if (!conn) return;
   console.log(`removing key ${key} from conn ${conn}`);
   delete conn.messageHandlers[key];
 }

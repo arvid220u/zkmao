@@ -39,14 +39,17 @@ import assert from "./assert.js";
 //  1.3 when received all STARTs: verifies all hashes, xors all numbers, seed rng with this, then just pick cards
 //  1.4 using same seed just choose order
 // 2. play:
-//  2.1 someone: PLAY card userID publicGameStateAfter
-//  2.2 everyone else: PLAYACK card fromUser userID publicGameStateAfter
+//  2.1 someone: PLAY card userID
+//  2.2 everyone else: PLAYACK card fromUser userID
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
 // ok dont overthink it
 // i think having a hierarchical state thing makes sense
 // this is javascript not rust
+
+// we assume that messages come to people in the order they are sent
+// i.e. we assume that channels are FIFO
 
 // ok so we have:
 // phase = {"setup", "play", "gameover", "abort"}
@@ -59,7 +62,7 @@ import assert from "./assert.js";
 //      players, readyHashes, startNumbers, myRandom
 //
 // play:
-//      nextTurn = user_id
+//      nextTurn = index into players
 //      public: players (order matters), playedCards (0 bottom, n-1 top), playerHands (id -> array)
 //          invariant: union is good, disjoint
 //
@@ -130,8 +133,10 @@ export function addListener(game, listener) {
   return indx;
 }
 export function removeListener(game, key) {
+  if (!game) return;
   console.log(`removing key ${key} from game ${game}`);
-  delete game.listener[key];
+  console.log(game);
+  delete game.listeners[key];
 }
 // this function needs to be called every time the game state is updated!!!!!!!!
 function update(game) {
@@ -228,7 +233,28 @@ async function handleStartMethod(game, m) {
   update(game);
 }
 function handlePlayMethod(game, m) {
-  unimplemented();
+  if (game.phase !== PHASE.PLAY) abort(game, "wrong phase");
+
+  const user = m.from;
+  const card = m.card;
+
+  // make sure it is this user's turn
+  if (user !== game.players[game.nextTurn]) {
+    abort(game, "user tried to make move but it's not their turn");
+  }
+
+  // make sure this user owns this card
+  if (!game.playerHands[user].some((c) => c.index === card.index)) {
+    abort(game, "user tried to play card not in their hand");
+  }
+
+  // make sure the card move is legal
+  if (!legalToPlayCard(game, card)) {
+    abort(game, "user tried to play illegal card");
+  }
+
+  // actually do the move
+  actuallyPlayCard(game, user, card);
 
   update(game);
 }
@@ -264,12 +290,38 @@ async function hash(message) {
   return hashHex;
 }
 
+function actuallyPlayCard(game, user, card) {
+  game.playedCards.push(card);
+  game.playerHands[user] = game.playerHands[user].filter(
+    (c) => c.index !== card.index
+  );
+  game.nextTurn = (game.nextTurn + 1) % game.players.length;
+  update(game);
+}
+
+function legalToPlayCard(game, card) {
+  // first move always legal
+  if (game.playedCards.length === 0) return true;
+  // either suit or rank must be the same
+  const lastCard = game.playedCards[game.playedCards.length - 1];
+  return lastCard.suit === card.suit || lastCard.rank === card.rank;
+}
+
 export function playCard(game, card) {
-  assert(game.phase === PHASE.PLAY && isMyTurn(game));
+  assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
+  assert(
+    game.playerHands[game.userId].some((c) => c.index === card.index),
+    game
+  );
   console.log(`play card!`);
   console.log(card);
 
-  unimplemented();
+  assert(legalToPlayCard(game, card), game);
+
+  send(game, { method: METHOD.PLAY, card });
+
+  actuallyPlayCard(game, game.userId, card);
+  update(game);
 }
 
 export async function sendReady(game) {
@@ -323,7 +375,7 @@ function startGame(game) {
   // note: we need to sort it first before we do it so everyone gets the same list
   game.players = utils.shuffle(game.players.sort(), rng);
 
-  game.nextTurn = game.players[0];
+  game.nextTurn = 0;
 
   game.playedCards = []; // start empty
 
@@ -383,5 +435,5 @@ export function getOppHand(game) {
   return game.playerHands[getOppUserId(game)];
 }
 export function isMyTurn(game) {
-  return getMyUserId(game) === game.nextTurn;
+  return getMyUserId(game) === game.players[game.nextTurn];
 }

@@ -124,7 +124,7 @@ function SelectableDeck(props) {
     <div style={{ fontSize: "3em" }} className="SelectableDeck">
       {props.cards.map((card, index) => {
         return (
-          <React.Fragment>
+          <React.Fragment key={`mycardsfragment${index}`}>
             <input
               type="radio"
               name="mycards"

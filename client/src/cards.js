@@ -43,11 +43,13 @@ export const SUITS = [SUIT.SPADES, SUIT.HEARTS, SUIT.DIAMONDS, SUIT.CLUBS]; // d
 export function orderedDeck() {
   let deck = [];
   let suit_index = 0;
+  let index = 0;
   for (const suit of SUITS) {
     let rank_index = 0;
     for (const rank of RANKS) {
-      deck.push({ rank, suit, rank_index, suit_index });
+      deck.push({ rank, suit, rank_index, suit_index, index });
       rank_index++;
+      index++;
     }
     suit_index++;
   }
@@ -106,6 +108,7 @@ export function deserializeCard(cardstr) {
     rank: RANKS[rank_index],
     suit_index,
     rank_index,
+    index: suit_index * 13 + rank_index,
   };
 }
 export function serializeCardASCII(card) {
