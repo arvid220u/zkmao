@@ -394,6 +394,26 @@ export async function sendReady(game) {
   update(game);
 }
 
+function checkIfWon(game) {
+  assert(game.phase === PHASE.PLAY, game);
+  assert(game.state === PLAY_STATE.WAIT_FOR_PLAY, game);
+
+  for (const user of game.players) {
+    if (game.playerHands[user].length === 0) {
+      // someone won!!!!
+      // assert only one player won
+      assert(
+        Object.values(game.playerHands).filter((l) => l.length === 0).length ===
+          1
+      );
+
+      game.winner = user;
+      game.phase = PHASE.GAMEOVER;
+      delete game.state;
+    }
+  }
+}
+
 function maybeStopWaitingForAcks(game) {
   // everyone except the player needs to ack the card
   if (game.acksReceived.length === game.players.length - 1) {
@@ -401,6 +421,10 @@ function maybeStopWaitingForAcks(game) {
     game.acksReceived = [];
     game.lastPlayedCard = null;
     game.lastPlayedUser = null;
+
+    // check if someone won
+    checkIfWon(game);
+
     update(game);
   }
 }

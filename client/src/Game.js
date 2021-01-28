@@ -51,7 +51,7 @@ function Play(props) {
 
   return (
     <div>
-      Playing the game!!!
+      {props.disabled || "Playing the game!!!"}
       <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
@@ -62,7 +62,7 @@ function Play(props) {
         selectedCard={selectedCard}
       />
       <PlayButton
-        myTurn={myTurn}
+        disabled={!myTurn || props.disabled}
         play={() =>
           logic.playCard(
             props.gameRef.current,
@@ -78,10 +78,10 @@ function Play(props) {
 function PlayButton(props) {
   return (
     <div>
-      <button onClick={props.play} disabled={!props.myTurn}>
+      <button onClick={props.play} disabled={props.disabled}>
         Play!
       </button>
-      <button onClick={props.pass} disabled={!props.myTurn}>
+      <button onClick={props.pass} disabled={props.disabled}>
         Pass
       </button>
     </div>
@@ -155,6 +155,12 @@ function SelectableDeck(props) {
   );
 }
 
+function GameOver(props) {
+  return (
+    <div style={{ fontSize: "2em" }}>Game is over!!!! {props.winner} won!</div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
@@ -177,8 +183,19 @@ export function Game(props) {
     <div>
       welcome to the game, {myUserId}!
       <hr />
+      {phase === logic.PHASE.GAMEOVER && (
+        <GameOver
+          gameRef={props.gameRef}
+          winner={props.gameRef.current.winner}
+        />
+      )}
       {phase === logic.PHASE.SETUP && <Setup />}
-      {phase === logic.PHASE.PLAY && <Play gameRef={props.gameRef} />}
+      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
+        <Play
+          gameRef={props.gameRef}
+          disabled={phase === logic.PHASE.GAMEOVER}
+        />
+      )}
       <hr />
       <Chat connRef={props.connRef} />
     </div>
