@@ -65,7 +65,7 @@ import assert from "./assert.js";
 // abort:
 //      (no data)
 
-const PHASE = {
+export const PHASE = {
   SETUP: "SETUP",
   PLAY: "PLAY",
   GAMEOVER: "GAMEOVER",
