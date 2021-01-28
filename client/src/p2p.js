@@ -4,6 +4,10 @@ const RTC_CONFIG = {
   ],
 };
 
+// var haveGum = navigator.mediaDevices
+//   .getUserMedia({ video: true, audio: true })
+//   .catch(console.log);
+
 export function createConn() {
   let conn = {
     pc: new RTCPeerConnection(RTC_CONFIG),
@@ -45,6 +49,7 @@ export function addMessageHandler(conn, handler) {
   return indx;
 }
 export function removeMessageHandler(conn, key) {
+  if (!conn) return;
   console.log(`removing key ${key} from conn ${conn}`);
   delete conn.messageHandlers[key];
 }
@@ -67,6 +72,8 @@ export function createOffer(conn, setOffer) {
   conn.dc.onopen = () => onOpen(conn);
   conn.dc.onmessage = (e) => onMessage(conn, e);
 
+  // haveGum
+  //   .then(() => conn.pc.createOffer())
   conn.pc
     .createOffer()
     .then((d) => conn.pc.setLocalDescription(d))

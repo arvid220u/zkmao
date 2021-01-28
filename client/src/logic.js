@@ -32,21 +32,24 @@ import assert from "./assert.js";
 // TODO: later version: add signatures to actually be secure
 
 // WIRE PROTOCOL:
-// always assume broadcast messages!!!!!!
+// always assume broadcast messages!!!!!! this allows us to assume synchronicity which makes everything so much simpler
 // 1. setup:
 //  1.1 everyone: READY hashOfRandomNumber userID (number is a 64-bit integers, user id is randomly generated (later should be public key))
 //  1.2 when everyone you have open connections with say READY: START randomNumber  (userID is sent with every message)
 //  1.3 when received all STARTs: verifies all hashes, xors all numbers, seed rng with this, then just pick cards
 //  1.4 using same seed just choose order
 // 2. play:
-//  2.1 someone: PLAY card userID publicGameStateAfter
-//  2.2 everyone else: PLAYACK card fromUser userID publicGameStateAfter
+//  2.1 someone: PLAY card userID
+//  2.2 everyone else: PLAYACK card user userID
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
 // ok dont overthink it
 // i think having a hierarchical state thing makes sense
 // this is javascript not rust
+
+// we assume that messages come to people in the order they are sent
+// i.e. we assume that channels are FIFO
 
 // ok so we have:
 // phase = {"setup", "play", "gameover", "abort"}
@@ -59,9 +62,14 @@ import assert from "./assert.js";
 //      players, readyHashes, startNumbers, myRandom
 //
 // play:
-//      nextTurn = user_id
-//      public: players (order matters), playedCards (0 bottom, n-1 top), playerHands (id -> array)
-//          invariant: union is good, disjoint
+//      nextTurn = index into players
+//      players (order matters),
+//      playedCards (0 bottom, n-1 top),
+//      playerHands (id -> array),
+//      state = {"waitforplay", "waitforack"}
+//      acksReceived = []
+//      lastPlayedCard
+//      lastPlayedUser
 //
 // gameover: (transitions directly to setup.sentReady)
 //      winner = user_id
@@ -82,6 +90,11 @@ const SETUP_STATE = {
   SENT_START: "SENT_START",
 };
 const SETUP_STATES = Object.values(SETUP_STATE);
+const PLAY_STATE = {
+  WAIT_FOR_PLAY: "WAIT_FOR_PLAY",
+  WAIT_FOR_PLAYACK: "WAIT_FOR_PLAYACK",
+};
+const PLAY_STATES = Object.values(PLAY_STATE);
 
 const METHOD = {
   READY: "READY",
@@ -130,8 +143,10 @@ export function addListener(game, listener) {
   return indx;
 }
 export function removeListener(game, key) {
+  if (!game) return;
   console.log(`removing key ${key} from game ${game}`);
-  delete game.listener[key];
+  console.log(game);
+  delete game.listeners[key];
 }
 // this function needs to be called every time the game state is updated!!!!!!!!
 function update(game) {
@@ -164,7 +179,7 @@ function unimplemented() {
 
 function handleReadyMethod(game, m) {
   // should be in setup phase
-  if (game.phase !== PHASE.SETUP) abort(game);
+  if (game.phase !== PHASE.SETUP) return abort(game);
   // should not have sent start already
   if (
     !(
@@ -172,14 +187,14 @@ function handleReadyMethod(game, m) {
       game.state === SETUP_STATE.SENT_READY
     )
   ) {
-    abort(game);
+    return abort(game);
   }
 
   const user = m.from;
   const hash = m.hash;
 
   // shouldn't receive twice; should have different IDs
-  if (game.players.includes(user)) abort(game);
+  if (game.players.includes(user)) return abort(game);
 
   game.players.push(user);
   game.readyHashes[user] = hash;
@@ -191,7 +206,7 @@ function handleReadyMethod(game, m) {
 }
 async function handleStartMethod(game, m) {
   // should be in setup phase
-  if (game.phase !== PHASE.SETUP) abort(game, "wrong phase");
+  if (game.phase !== PHASE.SETUP) return abort(game, "wrong phase");
   // should have sent ready (not necessarily should have sent start though)
   if (
     !(
@@ -199,22 +214,22 @@ async function handleStartMethod(game, m) {
       game.state === SETUP_STATE.SENT_START
     )
   ) {
-    abort(game);
+    return abort(game);
   }
 
   const user = m.from;
   const randomNumber = m.randomNumber;
 
   // shouldn't receive twice
-  if (Object.keys(game.startNumbers).includes(user)) abort(game);
+  if (Object.keys(game.startNumbers).includes(user)) return abort(game);
 
   // should receive from verified user
-  if (!game.players.includes(user)) abort(game, `unknown user ${user}`);
+  if (!game.players.includes(user)) return abort(game, `unknown user ${user}`);
 
   // assert that the hash is ok
   const randomNumberHash = await hash(`${randomNumber}`);
   if (game.readyHashes[user] !== randomNumberHash)
-    abort(
+    return abort(
       game,
       `incorrect hash ${randomNumberHash} received for random number ${randomNumber} from user ${user}`
     );
@@ -228,12 +243,61 @@ async function handleStartMethod(game, m) {
   update(game);
 }
 function handlePlayMethod(game, m) {
-  unimplemented();
+  if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAY)
+    return abort(game, "wrong state");
+
+  const user = m.from;
+  const card = m.card;
+
+  // make sure it is this user's turn
+  if (user !== game.players[game.nextTurn]) {
+    return abort(game, "user tried to make move but it's not their turn");
+  }
+
+  // make sure this user owns this card
+  if (!game.playerHands[user].some((c) => c.index === card.index)) {
+    return abort(game, "user tried to play card not in their hand");
+  }
+
+  // make sure the card move is legal
+  if (!legalToPlayCard(game, card)) {
+    return abort(game, "user tried to play illegal card");
+  }
+
+  // actually do the move
+  actuallyPlayCard(game, user, card);
+
+  sendPlayAck(game, user, card);
 
   update(game);
 }
 function handlePlayAckMethod(game, m) {
-  unimplemented();
+  if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAYACK)
+    return abort(game, "wrong state");
+
+  const user = m.user;
+  const from = m.from;
+  const card = m.card;
+
+  // make sure the right user n right card was acked
+  if (user !== game.lastPlayedUser) {
+    return abort(game, "tried to ack the wrong user");
+  }
+  if (card.index !== game.lastPlayedCard.index) {
+    return abort(game, "tried to ack the wrong card");
+  }
+
+  if (game.acksReceived.includes(from)) {
+    return abort(game, "already received ack from this user");
+  }
+
+  // TODO: verify the zk snarks
+
+  game.acksReceived.push(from);
+
+  maybeStopWaitingForAcks(game);
 
   update(game);
 }
@@ -264,6 +328,44 @@ async function hash(message) {
   return hashHex;
 }
 
+function actuallyPlayCard(game, user, card) {
+  game.playedCards.push(card);
+  game.playerHands[user] = game.playerHands[user].filter(
+    (c) => c.index !== card.index
+  );
+  game.nextTurn = (game.nextTurn + 1) % game.players.length;
+  game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
+  game.lastPlayedCard = card;
+  game.lastPlayedUser = user;
+  update(game);
+}
+
+function legalToPlayCard(game, card) {
+  // first move always legal
+  if (game.playedCards.length === 0) return true;
+  // either suit or rank must be the same
+  const lastCard = game.playedCards[game.playedCards.length - 1];
+  return lastCard.suit === card.suit || lastCard.rank === card.rank;
+}
+
+export function playCard(game, card) {
+  assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
+  assert(game.state === PLAY_STATE.WAIT_FOR_PLAY, game);
+  assert(
+    game.playerHands[game.userId].some((c) => c.index === card.index),
+    game
+  );
+  console.log(`play card!`);
+  console.log(card);
+
+  assert(legalToPlayCard(game, card), game);
+
+  send(game, { method: METHOD.PLAY, card });
+
+  actuallyPlayCard(game, game.userId, card);
+  update(game);
+}
+
 export async function sendReady(game) {
   assert(
     (game.phase === PHASE.SETUP && game.state === SETUP_STATE.PRE_READY) ||
@@ -279,6 +381,35 @@ export async function sendReady(game) {
   send(game, { method: METHOD.READY, hash: hash_r });
   game.state = SETUP_STATE.SENT_READY;
   maybeSendStart(game);
+
+  update(game);
+}
+
+function maybeStopWaitingForAcks(game) {
+  // everyone except the player needs to ack the card
+  if (game.acksReceived.length === game.players.length - 1) {
+    game.state = PLAY_STATE.WAIT_FOR_PLAY;
+    game.acksReceived = [];
+    game.lastPlayedCard = null;
+    game.lastPlayedUser = null;
+    update(game);
+  }
+}
+
+function sendPlayAck(game, user, card) {
+  assert(
+    game.phase === PHASE.PLAY && game.state === PLAY_STATE.WAIT_FOR_PLAYACK,
+    game
+  );
+
+  // TODO: run the zk rule snarks to determine penalties
+
+  send(game, { method: METHOD.PLAYACK, card, user });
+
+  assert(!game.acksReceived.includes(game.userId), game);
+  game.acksReceived.push(game.userId);
+
+  maybeStopWaitingForAcks(game);
 
   update(game);
 }
@@ -315,7 +446,7 @@ function startGame(game) {
   // note: we need to sort it first before we do it so everyone gets the same list
   game.players = utils.shuffle(game.players.sort(), rng);
 
-  game.nextTurn = game.players[0];
+  game.nextTurn = 0;
 
   game.playedCards = []; // start empty
 
@@ -324,6 +455,12 @@ function startGame(game) {
     utils.shuffle(game.players, rng),
     rng
   );
+
+  game.state = PLAY_STATE.WAIT_FOR_PLAY;
+
+  game.acksReceived = [];
+  game.lastPlayedCard = null;
+  game.lastPlayedUser = null;
 
   // now we're done :))))))
   game.phase = PHASE.PLAY;
@@ -357,4 +494,26 @@ function sendStart(game) {
   maybeStartGame(game);
 
   update(game);
+}
+
+// convenience for 2 players
+// TODO: update this for more players
+
+export function getMyUserId(game) {
+  return game.userId;
+}
+export function getOppUserId(game) {
+  return game.players.filter((x) => x !== getMyUserId(game))[0];
+}
+export function getMyHand(game) {
+  return game.playerHands[getMyUserId(game)];
+}
+export function getOppHand(game) {
+  return game.playerHands[getOppUserId(game)];
+}
+function isMyTurn(game) {
+  return getMyUserId(game) === game.players[game.nextTurn];
+}
+export function isMyTurnEnabled(game) {
+  return isMyTurn(game) && game.state === PLAY_STATE.WAIT_FOR_PLAY;
 }
