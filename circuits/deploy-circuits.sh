@@ -6,9 +6,9 @@ echo "removing old files"
 rm -r "$destination"
 mkdir "$destination"
 
-declare -a arr=("playCard" "drawcardsprivately")
+declare -a arr=("playCard" "drawcardsprivately" "maoRules")
 echo "unrolling"
-./unroll.sh $1
+./unroll.sh $1 $2
 echo "libifying"
 ./libify.sh
 for i in "${arr[@]}"
