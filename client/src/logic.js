@@ -152,6 +152,19 @@ function setUpPublicRules(game) {
       const publicRule = rules.publicRule(rule);
       game.allRules.push(publicRule);
       update(game);
+    })
+    .then(() => {
+      return rules.createPrivateRule(
+        "lastcard",
+        "isLastCard()",
+        rules.EVERYONE
+      );
+    })
+    .then((rule) => {
+      game.myRules.push(rule);
+      const publicRule = rules.publicRule(rule);
+      game.allRules.push(publicRule);
+      update(game);
     });
 }
 function resetPhase(game, phase, args) {

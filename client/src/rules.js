@@ -44,10 +44,14 @@ function compileSource(source) {
   console.log(source);
   utils.unimplemented();
 
-  return [1, 1, 1, 1, 1, 1];
+  return [1, 1, 1, 1, 1, 1 * source.length];
 }
 // TODO: implement this
 async function hashCompiledSource(compiled) {
   // should hash in the same way as the snark is doing
   return await utils.hash(JSON.stringify(compiled));
+}
+
+export function sameRule(r1, r2) {
+  return r1.hash === r2.hash;
 }
