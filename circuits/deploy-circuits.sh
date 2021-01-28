@@ -6,7 +6,7 @@ echo "removing old files"
 rm -r "$destination"
 mkdir "$destination"
 
-declare -a arr=("playCard" "drawcardsprivately" "maoRules")
+declare -a arr=("playCard" "drawcardsprivately" "maoRule")
 echo "unrolling"
 ./unroll.sh $1 $2
 echo "libifying"
@@ -14,12 +14,13 @@ echo "libifying"
 for i in "${arr[@]}"
 do
   #clean the folders
-  echo "cleaning"
+  echo "cleaning" $i
   ./clean.sh $i
   #compile it
-  echo "compiling"
+  echo "compiling" $i
   ./compile.sh $i  
   #Copy the files to the desired location
+  echo "deploying" $i 
   mkdir $destination/$i
   mkdir $destination/$i/compiled-circuit
   cp $i/circuit.wasm $destination/$i/compiled-circuit/circuit.wasm

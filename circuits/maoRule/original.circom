@@ -1,7 +1,8 @@
 include "../node_modules/circomlib/circuits/comparators.circom"
 include "../node_modules/circomlib/circuits/mimcsponge.circom"
 include "../modulo/libcircuit.circom"
-include "../accessBit/libcircuit.circom"
+include "../accessBitMao10/libcircuit.circom"
+include "../accessBitMao20/libcircuit.circom"
 template MaoRule(numInts){
     // rules are function from ( [2] x [53] x [53] ), they are represrented by 30 integers
     //each integer stores 200 bits, each bit is the value of the rule on an input
@@ -14,33 +15,44 @@ template MaoRule(numInts){
 
     signal output correctBehavior;  // a boolean indicating whether the behaviour was correct
 
-    //determining which bit to access
+    //determining which bit to accessBucket
 
-    signal bitNumber <== gameState[0] + 2 * gameState[1] + 2 * 53 * gameState[3]
+    signal bitNumber <== gameState[0] + 2 * gameState[1] + 2 * 53 * gameState[2]
     signal numBitsPerInteger <== 200;
-    component dev = Modulo(100); // TODO: change this magic number!!!!
-    dev.n <== bitNumber;
-    dev.m <== numBitsPerInteger;
-    signal integerStoringIt <== dev.quotient;
-    signal bitInInteger <== dev.remainder;
+    component dev1 = Modulo(100); // TODO: change this magic number!!!!
+    dev1.n <== bitNumber;
+    dev1.m <== numBitsPerInteger;
+    signal integerBin <== dev1.quotient;
+    signal bitInInteger <== dev1.remainder;
+
+    component dev2 = Modulo(100);
+    dev2.n <== bitInInteger;
+    dev2.m <== 10;
+    signal smallBucket <== dev2.quotient;
+    signal locInBucket <== dev2.remainder;
 
     //Accessing the integer
-    singal temp[numInts + 1];
+    signal temp[numInts + 1];
     temp[0] <== 0; 
     for (var ii = 0; ii < numInts; ii++) {
         component eq_ii = IsEqual();
         eq_ii.in[0] <== ii;
-        eq_ii.in[1] <== integerStoringIt;
+        eq_ii.in[1] <== integerBin;
         temp[ii+1] <== temp[ii] + eq_ii.out * rule[ii];
     }
 
     signal targetInteger <== temp[numInts];
     
+    //Accessing the small bucket
+    component accessBucket =  AccessBit20(20, 1024); //1024 = 2^10
+    accessBucket.idx <== smallBucket;
+    accessBucket.number <== targetInteger;
+    signal bucket <== accessBucket.bit;
     //Acessing the bit
-    component access =  AccessBit(200, 2);
-    access.idx <== bitInInteger;
-    access.number <== targetInteger;
-    signal bit <== access.bit;
+    component accessBit =  AccessBit10(10, 2);
+    accessBit.idx <== locInBucket;
+    accessBit.number <== bucket;
+    signal bit <== accessBit.bit;
 
     //check if the bit is correct
     
@@ -58,4 +70,4 @@ template MaoRule(numInts){
     ruleHash === mimcRule.outs[0];
 }
 
-component main = MaoRule();
+component main = MaoRule(30);
