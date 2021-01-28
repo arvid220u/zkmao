@@ -111,6 +111,8 @@ export function createGame(conn) {
   const userId = Math.random().toString(36).substr(2, 9);
   const game = {
     conn,
+    listeners: {},
+    listenerIndex: "0",
     phase: PHASE.SETUP,
     userId: userId,
     state: SETUP_STATE.PRE_READY,
@@ -120,6 +122,22 @@ export function createGame(conn) {
     myRandom: null,
   };
   return game;
+}
+export function addListener(game, listener) {
+  const indx = game.listenerIndex;
+  game.listeners[indx] = listener;
+  game.listenerIndex = `${parseInt(indx) + 1}`;
+  return indx;
+}
+export function removeListener(game, key) {
+  console.log(`removing key ${key} from game ${game}`);
+  delete game.listener[key];
+}
+// this function needs to be called every time the game state is updated!!!!!!!!
+function update(game) {
+  for (let listener of Object.values(game.listeners)) {
+    listener();
+  }
 }
 
 // m should be on form {data: , method: , ...}
@@ -168,6 +186,8 @@ function handleReadyMethod(game, m) {
 
   // if we have received all, send start
   maybeSendStart(game);
+
+  update(game);
 }
 async function handleStartMethod(game, m) {
   // should be in setup phase
@@ -204,16 +224,24 @@ async function handleStartMethod(game, m) {
 
   // if we have received all, go to the game!!
   maybeStartGame(game);
+
+  update(game);
 }
 function handlePlayMethod(game, m) {
   unimplemented();
+
+  update(game);
 }
 function handlePlayAckMethod(game, m) {
   unimplemented();
+
+  update(game);
 }
 function handleAbortMethod(game, m) {
   console.log("ABORTING :(((( SAD");
   unimplemented();
+
+  update(game);
 }
 
 function abort(game, reason) {
@@ -221,6 +249,8 @@ function abort(game, reason) {
   console.error(reason);
   send(game, { method: METHOD.ABORT, reason });
   game.phase = PHASE.ABORT;
+
+  update(game);
 }
 
 async function hash(message) {
@@ -249,6 +279,8 @@ export async function sendReady(game) {
   send(game, { method: METHOD.READY, hash: hash_r });
   game.state = SETUP_STATE.SENT_READY;
   maybeSendStart(game);
+
+  update(game);
 }
 
 function maybeStartGame(game) {
@@ -298,6 +330,8 @@ function startGame(game) {
 
   console.log("STARTING GAME!!!! exciting :)))");
   console.log(game);
+
+  update(game);
 }
 
 function maybeSendStart(game) {
@@ -321,4 +355,6 @@ function sendStart(game) {
   game.state = SETUP_STATE.SENT_START;
 
   maybeStartGame(game);
+
+  update(game);
 }
