@@ -38,6 +38,8 @@ export const SUIT = {
 };
 export const SUITS = [SUIT.SPADES, SUIT.HEARTS, SUIT.DIAMONDS, SUIT.CLUBS]; // dont do Object.values because we want to guarantee order
 
+export const VOID_CARD = "VOID_CARD";
+
 //      card is represented by {rank:, suit:} (why no types :(((()))))
 
 export function orderedDeck() {
@@ -121,4 +123,10 @@ export function serializeDeck(deck) {
     deckstr += serializeCard(card);
   }
   return deckstr;
+}
+
+export function sameCard(c1, c2) {
+  if (c1 === VOID_CARD || c2 === VOID_CARD)
+    return c1 === VOID_CARD && c2 === VOID_CARD;
+  return c1.index === c2.index;
 }

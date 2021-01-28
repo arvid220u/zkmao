@@ -255,8 +255,11 @@ function handlePlayMethod(game, m) {
     return abort(game, "user tried to make move but it's not their turn");
   }
 
-  // make sure this user owns this card
-  if (!game.playerHands[user].some((c) => c.index === card.index)) {
+  // make sure this user owns this card (or it is voidcard)
+  if (
+    card !== cards.VOID_CARD &&
+    !game.playerHands[user].some((c) => cards.sameCard(c, card))
+  ) {
     return abort(game, "user tried to play card not in their hand");
   }
 
@@ -285,7 +288,7 @@ function handlePlayAckMethod(game, m) {
   if (user !== game.lastPlayedUser) {
     return abort(game, "tried to ack the wrong user");
   }
-  if (card.index !== game.lastPlayedCard.index) {
+  if (!cards.sameCard(card, game.lastPlayedCard)) {
     return abort(game, "tried to ack the wrong card");
   }
 
@@ -329,18 +332,22 @@ async function hash(message) {
 }
 
 function actuallyPlayCard(game, user, card) {
-  game.playedCards.push(card);
-  game.playerHands[user] = game.playerHands[user].filter(
-    (c) => c.index !== card.index
-  );
   game.nextTurn = (game.nextTurn + 1) % game.players.length;
   game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
   game.lastPlayedCard = card;
   game.lastPlayedUser = user;
+  if (card !== cards.VOID_CARD) {
+    game.playedCards.push(card);
+    game.playerHands[user] = game.playerHands[user].filter(
+      (c) => c.index !== card.index
+    );
+  }
   update(game);
 }
 
 function legalToPlayCard(game, card) {
+  // always ok to pass
+  if (card === cards.VOID_CARD) return true;
   // first move always legal
   if (game.playedCards.length === 0) return true;
   // either suit or rank must be the same
@@ -352,7 +359,8 @@ export function playCard(game, card) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
   assert(game.state === PLAY_STATE.WAIT_FOR_PLAY, game);
   assert(
-    game.playerHands[game.userId].some((c) => c.index === card.index),
+    card === cards.VOID_CARD ||
+      game.playerHands[game.userId].some((c) => cards.sameCard(c, card)),
     game
   );
   console.log(`play card!`);

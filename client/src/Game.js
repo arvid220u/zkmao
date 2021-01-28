@@ -69,6 +69,7 @@ function Play(props) {
             cards.deserializeCard(selectedCard)
           )
         }
+        pass={() => logic.playCard(props.gameRef.current, cards.VOID_CARD)}
       />
     </div>
   );
@@ -79,6 +80,9 @@ function PlayButton(props) {
     <div>
       <button onClick={props.play} disabled={!props.myTurn}>
         Play!
+      </button>
+      <button onClick={props.pass} disabled={!props.myTurn}>
+        Pass
       </button>
     </div>
   );
