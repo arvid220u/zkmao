@@ -179,7 +179,7 @@ function unimplemented() {
 
 function handleReadyMethod(game, m) {
   // should be in setup phase
-  if (game.phase !== PHASE.SETUP) abort(game);
+  if (game.phase !== PHASE.SETUP) return abort(game);
   // should not have sent start already
   if (
     !(
@@ -187,14 +187,14 @@ function handleReadyMethod(game, m) {
       game.state === SETUP_STATE.SENT_READY
     )
   ) {
-    abort(game);
+    return abort(game);
   }
 
   const user = m.from;
   const hash = m.hash;
 
   // shouldn't receive twice; should have different IDs
-  if (game.players.includes(user)) abort(game);
+  if (game.players.includes(user)) return abort(game);
 
   game.players.push(user);
   game.readyHashes[user] = hash;
@@ -206,7 +206,7 @@ function handleReadyMethod(game, m) {
 }
 async function handleStartMethod(game, m) {
   // should be in setup phase
-  if (game.phase !== PHASE.SETUP) abort(game, "wrong phase");
+  if (game.phase !== PHASE.SETUP) return abort(game, "wrong phase");
   // should have sent ready (not necessarily should have sent start though)
   if (
     !(
@@ -214,22 +214,22 @@ async function handleStartMethod(game, m) {
       game.state === SETUP_STATE.SENT_START
     )
   ) {
-    abort(game);
+    return abort(game);
   }
 
   const user = m.from;
   const randomNumber = m.randomNumber;
 
   // shouldn't receive twice
-  if (Object.keys(game.startNumbers).includes(user)) abort(game);
+  if (Object.keys(game.startNumbers).includes(user)) return abort(game);
 
   // should receive from verified user
-  if (!game.players.includes(user)) abort(game, `unknown user ${user}`);
+  if (!game.players.includes(user)) return abort(game, `unknown user ${user}`);
 
   // assert that the hash is ok
   const randomNumberHash = await hash(`${randomNumber}`);
   if (game.readyHashes[user] !== randomNumberHash)
-    abort(
+    return abort(
       game,
       `incorrect hash ${randomNumberHash} received for random number ${randomNumber} from user ${user}`
     );
@@ -243,25 +243,26 @@ async function handleStartMethod(game, m) {
   update(game);
 }
 function handlePlayMethod(game, m) {
-  if (game.phase !== PHASE.PLAY) abort(game, "wrong phase");
-  if (game.state !== PLAY_STATE.WAIT_FOR_PLAY) abort(game, "wrong state");
+  if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAY)
+    return abort(game, "wrong state");
 
   const user = m.from;
   const card = m.card;
 
   // make sure it is this user's turn
   if (user !== game.players[game.nextTurn]) {
-    abort(game, "user tried to make move but it's not their turn");
+    return abort(game, "user tried to make move but it's not their turn");
   }
 
   // make sure this user owns this card
   if (!game.playerHands[user].some((c) => c.index === card.index)) {
-    abort(game, "user tried to play card not in their hand");
+    return abort(game, "user tried to play card not in their hand");
   }
 
   // make sure the card move is legal
   if (!legalToPlayCard(game, card)) {
-    abort(game, "user tried to play illegal card");
+    return abort(game, "user tried to play illegal card");
   }
 
   // actually do the move
@@ -272,8 +273,9 @@ function handlePlayMethod(game, m) {
   update(game);
 }
 function handlePlayAckMethod(game, m) {
-  if (game.phase !== PHASE.PLAY) abort(game, "wrong phase");
-  if (game.state !== PLAY_STATE.WAIT_FOR_PLAYACK) abort(game, "wrong state");
+  if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAYACK)
+    return abort(game, "wrong state");
 
   const user = m.user;
   const from = m.from;
@@ -281,14 +283,14 @@ function handlePlayAckMethod(game, m) {
 
   // make sure the right user n right card was acked
   if (user !== game.lastPlayedUser) {
-    abort(game, "tried to ack the wrong user");
+    return abort(game, "tried to ack the wrong user");
   }
   if (card.index !== game.lastPlayedCard.index) {
-    abort(game, "tried to ack the wrong card");
+    return abort(game, "tried to ack the wrong card");
   }
 
   if (game.acksReceived.includes(from)) {
-    abort(game, "already received ack from this user");
+    return abort(game, "already received ack from this user");
   }
 
   // TODO: verify the zk snarks
