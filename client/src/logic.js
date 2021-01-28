@@ -1,6 +1,10 @@
 // logic.js is intended to hold all game logic
 
+import seedrandom from "seedrandom";
+
 import * as p2p from "./p2p.js";
+import * as utils from "./utils.js";
+import * as cards from "./cards.js";
 
 import assert from "./assert.js";
 
@@ -149,8 +153,9 @@ function handleReadyMethod(game, m) {
       game.state === SETUP_STATE.PRE_READY ||
       game.state === SETUP_STATE.SENT_READY
     )
-  )
+  ) {
     abort(game);
+  }
 
   const user = m.from;
   const hash = m.hash;
@@ -164,8 +169,41 @@ function handleReadyMethod(game, m) {
   // if we have received all, send start
   maybeSendStart(game);
 }
-function handleStartMethod(game, m) {
-  unimplemented();
+async function handleStartMethod(game, m) {
+  // should be in setup phase
+  if (game.phase !== PHASE.SETUP) abort(game, "wrong phase");
+  // should have sent ready (not necessarily should have sent start though)
+  if (
+    !(
+      game.state === SETUP_STATE.SENT_READY ||
+      game.state === SETUP_STATE.SENT_START
+    )
+  ) {
+    abort(game);
+  }
+
+  const user = m.from;
+  const randomNumber = m.randomNumber;
+
+  // shouldn't receive twice
+  if (Object.keys(game.startNumbers).includes(user)) abort(game);
+
+  // should receive from verified user
+  if (!game.players.includes(user)) abort(game, `unknown user ${user}`);
+
+  // assert that the hash is ok
+  const randomNumberHash = await hash(`${randomNumber}`);
+  if (game.readyHashes[user] !== randomNumberHash)
+    abort(
+      game,
+      `incorrect hash ${randomNumberHash} received for random number ${randomNumber} from user ${user}`
+    );
+
+  // add to numbers
+  game.startNumbers[user] = randomNumber;
+
+  // if we have received all, go to the game!!
+  maybeStartGame(game);
 }
 function handlePlayMethod(game, m) {
   unimplemented();
@@ -174,12 +212,14 @@ function handlePlayAckMethod(game, m) {
   unimplemented();
 }
 function handleAbortMethod(game, m) {
+  console.log("ABORTING :(((( SAD");
   unimplemented();
 }
 
-function abort(game) {
-  console.log("ABORT GAME :((");
-  send(game, { method: METHOD.ABORT });
+function abort(game, reason) {
+  console.error("ABORT GAME :((");
+  console.error(reason);
+  send(game, { method: METHOD.ABORT, reason });
   game.phase = PHASE.ABORT;
 }
 
@@ -206,10 +246,58 @@ export async function sendReady(game) {
   const hash_r = await hash(`${game.myRandom}`);
   console.log(hash_r);
   game.readyHashes[game.userId] = hash_r;
-  game.startNumbers[game.userId] = game.myRandom;
   send(game, { method: METHOD.READY, hash: hash_r });
   game.state = SETUP_STATE.SENT_READY;
   maybeSendStart(game);
+}
+
+function maybeStartGame(game) {
+  if (game.players.length === Object.keys(game.startNumbers).length) {
+    startGame(game);
+  }
+}
+function startGame(game) {
+  assert(
+    game.phase === PHASE.SETUP && game.state === SETUP_STATE.SENT_START,
+    game
+  );
+
+  // xor all the random numbers (which means that as long as at least 1 person honest, it is random)
+  let finalRandomNumber = 0;
+  Object.values(game.startNumbers).forEach((randomNumber) => {
+    finalRandomNumber ^= randomNumber;
+  });
+
+  console.log(`final randomness: ${finalRandomNumber}`);
+  // use this random number as the seed of an rng
+  let rng = seedrandom(`${finalRandomNumber}`);
+
+  // now we can transition to the game phase
+  // delete the old game object properties
+  delete game.state;
+  delete game.readyHashes;
+  delete game.startNumbers;
+  delete game.myRandom;
+
+  // shuffle the player list
+  // note: we need to sort it first before we do it so everyone gets the same list
+  game.players = utils.shuffle(game.players.sort(), rng);
+
+  game.nextTurn = game.players[0];
+
+  game.playedCards = []; // start empty
+
+  // now deal cards
+  game.playerHands = cards.dealShuffledCards(
+    utils.shuffle(game.players, rng),
+    rng
+  );
+
+  // now we're done :))))))
+  game.phase = PHASE.PLAY;
+
+  console.log("STARTING GAME!!!! exciting :)))");
+  console.log(game);
 }
 
 function maybeSendStart(game) {
@@ -221,7 +309,6 @@ function maybeSendStart(game) {
     sendStart(game);
   }
 }
-
 function sendStart(game) {
   assert(
     game.phase === PHASE.SETUP && game.state === SETUP_STATE.SENT_READY,
@@ -230,5 +317,8 @@ function sendStart(game) {
 
   send(game, { method: METHOD.START, randomNumber: game.myRandom });
 
+  game.startNumbers[game.userId] = game.myRandom;
   game.state = SETUP_STATE.SENT_START;
+
+  maybeStartGame(game);
 }
