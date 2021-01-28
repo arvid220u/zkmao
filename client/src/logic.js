@@ -264,6 +264,14 @@ async function hash(message) {
   return hashHex;
 }
 
+export function playCard(game, card) {
+  assert(game.phase === PHASE.PLAY && isMyTurn(game));
+  console.log(`play card!`);
+  console.log(card);
+
+  unimplemented();
+}
+
 export async function sendReady(game) {
   assert(
     (game.phase === PHASE.SETUP && game.state === SETUP_STATE.PRE_READY) ||
@@ -373,4 +381,7 @@ export function getMyHand(game) {
 }
 export function getOppHand(game) {
   return game.playerHands[getOppUserId(game)];
+}
+export function isMyTurn(game) {
+  return getMyUserId(game) === game.nextTurn;
 }

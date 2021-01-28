@@ -25,6 +25,10 @@ function Play(props) {
   const [oppUserId, setOppUserId] = useState(
     logic.getOppUserId(props.gameRef.current)
   );
+  const [selectedCard, setSelectedCard] = useState(null);
+  const changeCard = useCallback((e) => {
+    setSelectedCard(e.currentTarget.value);
+  }, []);
 
   const updateGameState = useCallback(() => {
     setPlayedCards(props.gameRef.current.playedCards);
@@ -47,7 +51,31 @@ function Play(props) {
       <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
-      <MyHand cards={myHand} user={myUserId} />
+      <MyHand
+        cards={myHand}
+        user={myUserId}
+        changeCard={changeCard}
+        selectedCard={selectedCard}
+      />
+      <PlayButton
+        myTurn={logic.isMyTurn(props.gameRef.current)}
+        play={() =>
+          logic.playCard(
+            props.gameRef.current,
+            cards.deserializeCard(selectedCard)
+          )
+        }
+      />
+    </div>
+  );
+}
+
+function PlayButton(props) {
+  return (
+    <div>
+      <button onClick={props.play} disabled={!props.myTurn}>
+        Play!
+      </button>
     </div>
   );
 }
@@ -72,7 +100,11 @@ function MyHand(props) {
   return (
     <div>
       my cards:
-      <SelectableDeck cards={props.cards} />
+      <SelectableDeck
+        cards={props.cards}
+        changeCard={props.changeCard}
+        selectedCard={props.selectedCard}
+      />
     </div>
   );
 }
@@ -85,27 +117,27 @@ function Deck(props) {
   );
 }
 function SelectableDeck(props) {
-  const [selectedCard, setSelectedCard] = useState(null);
-  const changeCard = useCallback((e) => {
-    setSelectedCard(e.currentTarget.value);
-  });
   if (props.cards.length === 0) {
     return <div>(none)</div>;
   }
   return (
-    <div style={{ fontSize: "3em" }} class="SelectableDeck">
-      {props.cards.map((card) => {
+    <div style={{ fontSize: "3em" }} className="SelectableDeck">
+      {props.cards.map((card, index) => {
         return (
           <React.Fragment>
             <input
               type="radio"
               name="mycards"
               value={cards.serializeCard(card)}
-              checked={selectedCard === cards.serializeCard(card)}
-              onChange={changeCard}
+              checked={props.selectedCard === cards.serializeCard(card)}
+              onChange={props.changeCard}
               id={cards.serializeCardASCII(card)}
+              key={`mycardsradio${index}`}
             />
-            <label for={cards.serializeCardASCII(card)}>
+            <label
+              htmlFor={cards.serializeCardASCII(card)}
+              key={`mycardslabel${index}`}
+            >
               {cards.serializeCard(card)}
             </label>
           </React.Fragment>

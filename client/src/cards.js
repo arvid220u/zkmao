@@ -91,6 +91,23 @@ export function serializeCard(card) {
     )
   );
 }
+export function deserializeCard(cardstr) {
+  const aceOfSpades = "🂡";
+  const secondCharSpades = aceOfSpades.charCodeAt(1);
+  const secondChar = cardstr.charCodeAt(1);
+  const diff = secondChar - secondCharSpades;
+  const suit_index = Math.floor(diff / 16);
+  let rank_index = diff % 16;
+  if (rank_index >= 12) {
+    rank_index--;
+  }
+  return {
+    suit: SUITS[suit_index],
+    rank: RANKS[rank_index],
+    suit_index,
+    rank_index,
+  };
+}
 export function serializeCardASCII(card) {
   return card.rank + card.suit.charAt(0).toUpperCase();
 }
