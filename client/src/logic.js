@@ -5,6 +5,7 @@ import seedrandom from "seedrandom";
 import * as p2p from "./p2p.js";
 import * as utils from "./utils.js";
 import * as cards from "./cards.js";
+import * as config from "./config.js";
 
 import assert from "./assert.js";
 
@@ -126,15 +127,59 @@ export function createGame(conn) {
     conn,
     listeners: {},
     listenerIndex: "0",
-    phase: PHASE.SETUP,
     userId: userId,
-    state: SETUP_STATE.PRE_READY,
-    players: [userId],
-    readyHashes: {},
-    startNumbers: {},
-    myRandom: null,
+    phase: null,
+    data: {}, // contains data for every phase
   };
+  for (const phase of PHASES) {
+    game.data[phase] = {};
+  }
+  initPhase(game, PHASE.SETUP);
   return game;
+}
+function resetPhase(game, phase, args) {
+  assert(PHASES.includes(phase), game);
+  let data = {};
+  if (phase === PHASE.SETUP) {
+    data = {
+      state: SETUP_STATE.PRE_READY,
+      players: [game.userId],
+      readyHashes: {},
+      startNumbers: {},
+      myRandom: null,
+    };
+  } else if (phase === PHASE.PLAY) {
+    // shuffle the player list
+    // note: we need to sort it first before we do it so everyone gets the same list
+
+    data.players = utils.shuffle(
+      [...game.data[PHASE.SETUP].players].sort(),
+      args.rng
+    );
+
+    data.nextTurn = 0;
+
+    data.playedCards = []; // start empty
+
+    // now deal cards
+    data.playerHands = cards.dealShuffledCards(
+      utils.shuffle(data.players, args.rng),
+      args.rng,
+      config.START_FROM_RANK
+    );
+
+    data.state = PLAY_STATE.WAIT_FOR_PLAY;
+
+    data.acksReceived = [];
+    data.lastPlayedCard = null;
+    data.lastPlayedUser = null;
+  }
+  game.data[phase] = data;
+}
+function initPhase(game, phase, args) {
+  assert(PHASES.includes(phase), game);
+  resetPhase(game, phase, args);
+  game.phase = phase;
 }
 export function addListener(game, listener) {
   const indx = game.listenerIndex;
@@ -178,13 +223,15 @@ function unimplemented() {
 }
 
 function handleReadyMethod(game, m) {
-  // should be in setup phase
-  if (game.phase !== PHASE.SETUP) return abort(game);
+  // should be in setup phase, or gameover phase
+  if (!(game.phase === PHASE.SETUP || game.phase === PHASE.GAMEOVER))
+    return abort(game);
+  const data = game.data[PHASE.SETUP];
   // should not have sent start already
   if (
     !(
-      game.state === SETUP_STATE.PRE_READY ||
-      game.state === SETUP_STATE.SENT_READY
+      data.state === SETUP_STATE.PRE_READY ||
+      data.state === SETUP_STATE.SENT_READY
     )
   ) {
     return abort(game);
@@ -194,10 +241,10 @@ function handleReadyMethod(game, m) {
   const hash = m.hash;
 
   // shouldn't receive twice; should have different IDs
-  if (game.players.includes(user)) return abort(game);
+  if (data.players.includes(user)) return abort(game);
 
-  game.players.push(user);
-  game.readyHashes[user] = hash;
+  data.players.push(user);
+  data.readyHashes[user] = hash;
 
   // if we have received all, send start
   maybeSendStart(game);
@@ -207,11 +254,12 @@ function handleReadyMethod(game, m) {
 async function handleStartMethod(game, m) {
   // should be in setup phase
   if (game.phase !== PHASE.SETUP) return abort(game, "wrong phase");
+  const data = game.data[PHASE.SETUP];
   // should have sent ready (not necessarily should have sent start though)
   if (
     !(
-      game.state === SETUP_STATE.SENT_READY ||
-      game.state === SETUP_STATE.SENT_START
+      data.state === SETUP_STATE.SENT_READY ||
+      data.state === SETUP_STATE.SENT_START
     )
   ) {
     return abort(game);
@@ -221,21 +269,21 @@ async function handleStartMethod(game, m) {
   const randomNumber = m.randomNumber;
 
   // shouldn't receive twice
-  if (Object.keys(game.startNumbers).includes(user)) return abort(game);
+  if (Object.keys(data.startNumbers).includes(user)) return abort(game);
 
   // should receive from verified user
-  if (!game.players.includes(user)) return abort(game, `unknown user ${user}`);
+  if (!data.players.includes(user)) return abort(game, `unknown user ${user}`);
 
   // assert that the hash is ok
   const randomNumberHash = await hash(`${randomNumber}`);
-  if (game.readyHashes[user] !== randomNumberHash)
+  if (data.readyHashes[user] !== randomNumberHash)
     return abort(
       game,
       `incorrect hash ${randomNumberHash} received for random number ${randomNumber} from user ${user}`
     );
 
   // add to numbers
-  game.startNumbers[user] = randomNumber;
+  data.startNumbers[user] = randomNumber;
 
   // if we have received all, go to the game!!
   maybeStartGame(game);
@@ -244,21 +292,22 @@ async function handleStartMethod(game, m) {
 }
 function handlePlayMethod(game, m) {
   if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
-  if (game.state !== PLAY_STATE.WAIT_FOR_PLAY)
+  const data = game.data[game.phase];
+  if (data.state !== PLAY_STATE.WAIT_FOR_PLAY)
     return abort(game, "wrong state");
 
   const user = m.from;
   const card = m.card;
 
   // make sure it is this user's turn
-  if (user !== game.players[game.nextTurn]) {
+  if (user !== data.players[data.nextTurn]) {
     return abort(game, "user tried to make move but it's not their turn");
   }
 
   // make sure this user owns this card (or it is voidcard)
   if (
     card !== cards.VOID_CARD &&
-    !game.playerHands[user].some((c) => cards.sameCard(c, card))
+    !data.playerHands[user].some((c) => cards.sameCard(c, card))
   ) {
     return abort(game, "user tried to play card not in their hand");
   }
@@ -277,7 +326,8 @@ function handlePlayMethod(game, m) {
 }
 function handlePlayAckMethod(game, m) {
   if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
-  if (game.state !== PLAY_STATE.WAIT_FOR_PLAYACK)
+  const data = game.data[game.phase];
+  if (data.state !== PLAY_STATE.WAIT_FOR_PLAYACK)
     return abort(game, "wrong state");
 
   const user = m.user;
@@ -285,20 +335,20 @@ function handlePlayAckMethod(game, m) {
   const card = m.card;
 
   // make sure the right user n right card was acked
-  if (user !== game.lastPlayedUser) {
+  if (user !== data.lastPlayedUser) {
     return abort(game, "tried to ack the wrong user");
   }
-  if (!cards.sameCard(card, game.lastPlayedCard)) {
+  if (!cards.sameCard(card, data.lastPlayedCard)) {
     return abort(game, "tried to ack the wrong card");
   }
 
-  if (game.acksReceived.includes(from)) {
+  if (data.acksReceived.includes(from)) {
     return abort(game, "already received ack from this user");
   }
 
   // TODO: verify the zk snarks
 
-  game.acksReceived.push(from);
+  data.acksReceived.push(from);
 
   maybeStopWaitingForAcks(game);
 
@@ -332,13 +382,14 @@ async function hash(message) {
 }
 
 function actuallyPlayCard(game, user, card) {
-  game.nextTurn = (game.nextTurn + 1) % game.players.length;
-  game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
-  game.lastPlayedCard = card;
-  game.lastPlayedUser = user;
+  const data = game.data[game.phase];
+  data.nextTurn = (data.nextTurn + 1) % data.players.length;
+  data.state = PLAY_STATE.WAIT_FOR_PLAYACK;
+  data.lastPlayedCard = card;
+  data.lastPlayedUser = user;
   if (card !== cards.VOID_CARD) {
-    game.playedCards.push(card);
-    game.playerHands[user] = game.playerHands[user].filter(
+    data.playedCards.push(card);
+    data.playerHands[user] = data.playerHands[user].filter(
       (c) => c.index !== card.index
     );
   }
@@ -346,21 +397,23 @@ function actuallyPlayCard(game, user, card) {
 }
 
 function legalToPlayCard(game, card) {
+  const data = game.data[game.phase];
   // always ok to pass
   if (card === cards.VOID_CARD) return true;
   // first move always legal
-  if (game.playedCards.length === 0) return true;
+  if (data.playedCards.length === 0) return true;
   // either suit or rank must be the same
-  const lastCard = game.playedCards[game.playedCards.length - 1];
+  const lastCard = data.playedCards[data.playedCards.length - 1];
   return lastCard.suit === card.suit || lastCard.rank === card.rank;
 }
 
 export function playCard(game, card) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
-  assert(game.state === PLAY_STATE.WAIT_FOR_PLAY, game);
+  const data = game.data[game.phase];
+  assert(data.state === PLAY_STATE.WAIT_FOR_PLAY, game);
   assert(
     card === cards.VOID_CARD ||
-      game.playerHands[game.userId].some((c) => cards.sameCard(c, card)),
+      data.playerHands[game.userId].some((c) => cards.sameCard(c, card)),
     game
   );
   console.log(`play card!`);
@@ -374,48 +427,76 @@ export function playCard(game, card) {
   update(game);
 }
 
+export function restartGame(game) {
+  game.phase = PHASE.SETUP;
+
+  sendReady(game);
+}
+
 export async function sendReady(game) {
-  assert(
-    (game.phase === PHASE.SETUP && game.state === SETUP_STATE.PRE_READY) ||
-      game.phase === PHASE.GAMEOVER,
-    game
-  );
+  assert(game.phase === PHASE.SETUP, game);
+  const data = game.data[PHASE.SETUP];
+  assert(data.state === SETUP_STATE.PRE_READY, game);
   // generate a random number
-  game.myRandom = Math.floor(Math.random() * 2 ** 64);
+  data.myRandom = Math.floor(Math.random() * 2 ** 64);
   // hash the random number
-  const hash_r = await hash(`${game.myRandom}`);
+  const hash_r = await hash(`${data.myRandom}`);
   console.log(hash_r);
-  game.readyHashes[game.userId] = hash_r;
+  data.readyHashes[game.userId] = hash_r;
   send(game, { method: METHOD.READY, hash: hash_r });
-  game.state = SETUP_STATE.SENT_READY;
+  data.state = SETUP_STATE.SENT_READY;
   maybeSendStart(game);
 
   update(game);
 }
 
+function checkIfWon(game) {
+  assert(game.phase === PHASE.PLAY, game);
+  const data = game.data[game.phase];
+  assert(data.state === PLAY_STATE.WAIT_FOR_PLAY, game);
+
+  for (const user of data.players) {
+    if (data.playerHands[user].length === 0) {
+      // someone won!!!!
+      // assert only one player won
+      assert(
+        Object.values(data.playerHands).filter((l) => l.length === 0).length ===
+          1
+      );
+
+      game.phase = PHASE.GAMEOVER;
+      game.data[PHASE.GAMEOVER].winner = user;
+    }
+  }
+}
+
 function maybeStopWaitingForAcks(game) {
+  const data = game.data[game.phase];
   // everyone except the player needs to ack the card
-  if (game.acksReceived.length === game.players.length - 1) {
-    game.state = PLAY_STATE.WAIT_FOR_PLAY;
-    game.acksReceived = [];
-    game.lastPlayedCard = null;
-    game.lastPlayedUser = null;
+  if (data.acksReceived.length === data.players.length - 1) {
+    data.state = PLAY_STATE.WAIT_FOR_PLAY;
+    data.acksReceived = [];
+    data.lastPlayedCard = null;
+    data.lastPlayedUser = null;
+
+    // check if someone won
+    checkIfWon(game);
+
     update(game);
   }
 }
 
 function sendPlayAck(game, user, card) {
-  assert(
-    game.phase === PHASE.PLAY && game.state === PLAY_STATE.WAIT_FOR_PLAYACK,
-    game
-  );
+  assert(game.phase === PHASE.PLAY, game);
+  const data = game.data[game.phase];
+  assert(data.state === PLAY_STATE.WAIT_FOR_PLAYACK, game);
 
   // TODO: run the zk rule snarks to determine penalties
 
   send(game, { method: METHOD.PLAYACK, card, user });
 
-  assert(!game.acksReceived.includes(game.userId), game);
-  game.acksReceived.push(game.userId);
+  assert(!data.acksReceived.includes(game.userId), game);
+  data.acksReceived.push(game.userId);
 
   maybeStopWaitingForAcks(game);
 
@@ -423,19 +504,19 @@ function sendPlayAck(game, user, card) {
 }
 
 function maybeStartGame(game) {
-  if (game.players.length === Object.keys(game.startNumbers).length) {
+  const data = game.data[game.phase];
+  if (data.players.length === Object.keys(data.startNumbers).length) {
     startGame(game);
   }
 }
 function startGame(game) {
-  assert(
-    game.phase === PHASE.SETUP && game.state === SETUP_STATE.SENT_START,
-    game
-  );
+  assert(game.phase === PHASE.SETUP);
+  const data = game.data[game.phase];
+  assert(data.state === SETUP_STATE.SENT_START, game);
 
   // xor all the random numbers (which means that as long as at least 1 person honest, it is random)
   let finalRandomNumber = 0;
-  Object.values(game.startNumbers).forEach((randomNumber) => {
+  Object.values(data.startNumbers).forEach((randomNumber) => {
     finalRandomNumber ^= randomNumber;
   });
 
@@ -445,33 +526,8 @@ function startGame(game) {
 
   // now we can transition to the game phase
   // delete the old game object properties
-  delete game.state;
-  delete game.readyHashes;
-  delete game.startNumbers;
-  delete game.myRandom;
-
-  // shuffle the player list
-  // note: we need to sort it first before we do it so everyone gets the same list
-  game.players = utils.shuffle(game.players.sort(), rng);
-
-  game.nextTurn = 0;
-
-  game.playedCards = []; // start empty
-
-  // now deal cards
-  game.playerHands = cards.dealShuffledCards(
-    utils.shuffle(game.players, rng),
-    rng
-  );
-
-  game.state = PLAY_STATE.WAIT_FOR_PLAY;
-
-  game.acksReceived = [];
-  game.lastPlayedCard = null;
-  game.lastPlayedUser = null;
-
-  // now we're done :))))))
-  game.phase = PHASE.PLAY;
+  initPhase(game, PHASE.PLAY, { rng });
+  resetPhase(game, PHASE.SETUP);
 
   console.log("STARTING GAME!!!! exciting :)))");
   console.log(game);
@@ -480,24 +536,24 @@ function startGame(game) {
 }
 
 function maybeSendStart(game) {
+  const data = game.data[PHASE.SETUP];
   if (
     p2p.numConnections(game.conn) ===
-    Object.keys(game.readyHashes).length - 1
+    Object.keys(data.readyHashes).length - 1
   ) {
-    assert(game.players.length === Object.keys(game.readyHashes).length, game);
+    assert(data.players.length === Object.keys(data.readyHashes).length, game);
     sendStart(game);
   }
 }
 function sendStart(game) {
-  assert(
-    game.phase === PHASE.SETUP && game.state === SETUP_STATE.SENT_READY,
-    game
-  );
+  assert(game.phase === PHASE.SETUP, game);
+  const data = game.data[game.phase];
+  assert(data.state === SETUP_STATE.SENT_READY, game);
 
-  send(game, { method: METHOD.START, randomNumber: game.myRandom });
+  send(game, { method: METHOD.START, randomNumber: data.myRandom });
 
-  game.startNumbers[game.userId] = game.myRandom;
-  game.state = SETUP_STATE.SENT_START;
+  data.startNumbers[game.userId] = data.myRandom;
+  data.state = SETUP_STATE.SENT_START;
 
   maybeStartGame(game);
 
@@ -511,17 +567,37 @@ export function getMyUserId(game) {
   return game.userId;
 }
 export function getOppUserId(game) {
-  return game.players.filter((x) => x !== getMyUserId(game))[0];
+  const data = game.data[PHASE.PLAY];
+  const oppUserId = data.players.filter((x) => x !== getMyUserId(game))[0];
+  console.log(`opp user id: ${oppUserId}`);
+  return oppUserId;
 }
 export function getMyHand(game) {
-  return game.playerHands[getMyUserId(game)];
+  const data = game.data[PHASE.PLAY];
+  return data.playerHands[getMyUserId(game)];
 }
 export function getOppHand(game) {
-  return game.playerHands[getOppUserId(game)];
+  const data = game.data[PHASE.PLAY];
+  const playerHand = data.playerHands[getOppUserId(game)];
+  console.log("player hand!");
+  console.log(JSON.stringify(playerHand));
+  return playerHand;
 }
 function isMyTurn(game) {
-  return getMyUserId(game) === game.players[game.nextTurn];
+  const data = game.data[PHASE.PLAY];
+  return getMyUserId(game) === data.players[data.nextTurn];
 }
 export function isMyTurnEnabled(game) {
-  return isMyTurn(game) && game.state === PLAY_STATE.WAIT_FOR_PLAY;
+  const data = game.data[PHASE.PLAY];
+  return isMyTurn(game) && data.state === PLAY_STATE.WAIT_FOR_PLAY;
+}
+
+export function getPlayedCards(game) {
+  const data = game.data[PHASE.PLAY];
+  return data.playedCards;
+}
+
+export function getWinner(game) {
+  const data = game.data[PHASE.GAMEOVER];
+  return data.winner;
 }

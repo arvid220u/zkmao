@@ -42,14 +42,17 @@ export const VOID_CARD = "VOID_CARD";
 
 //      card is represented by {rank:, suit:} (why no types :(((()))))
 
-export function orderedDeck() {
+export function orderedDeck(startFromRankIndex) {
+  if (!startFromRankIndex) startFromRankIndex = 0;
   let deck = [];
   let suit_index = 0;
   let index = 0;
   for (const suit of SUITS) {
     let rank_index = 0;
     for (const rank of RANKS) {
-      deck.push({ rank, suit, rank_index, suit_index, index });
+      if (rank_index >= startFromRankIndex) {
+        deck.push({ rank, suit, rank_index, suit_index, index });
+      }
       rank_index++;
       index++;
     }
@@ -58,15 +61,15 @@ export function orderedDeck() {
   return deck;
 }
 
-export function shuffledDeck(rng) {
-  let deck = orderedDeck();
+export function shuffledDeck(rng, startFromRankIndex) {
+  let deck = orderedDeck(startFromRankIndex);
   return utils.shuffle(deck, rng);
 }
 
 // users: list of IDs for each user who wants a card
 // return: an object {user_id -> array of cards}, as even as possible, union is all cards, disjoint
-export function dealShuffledCards(users, rng) {
-  let deck = shuffledDeck(rng);
+export function dealShuffledCards(users, rng, startFromRankIndex) {
+  let deck = shuffledDeck(rng, startFromRankIndex);
   let cards = {};
   let index = 0;
   for (const user of users) {

@@ -13,7 +13,7 @@ function Setup() {
 
 function Play(props) {
   const [playedCards, setPlayedCards] = useState(
-    props.gameRef.current.playedCards
+    logic.getPlayedCards(props.gameRef.current)
   );
   const [myHand, setMyHand] = useState(logic.getMyHand(props.gameRef.current));
   const [oppHand, setOppHand] = useState(
@@ -34,7 +34,7 @@ function Play(props) {
   }, []);
 
   const updateGameState = useCallback(() => {
-    setPlayedCards(props.gameRef.current.playedCards);
+    setPlayedCards(logic.getPlayedCards(props.gameRef.current));
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));
     setMyUserId(logic.getMyUserId(props.gameRef.current));
@@ -51,7 +51,7 @@ function Play(props) {
 
   return (
     <div>
-      Playing the game!!!
+      {props.disabled || "Playing the game!!!"}
       <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
@@ -62,7 +62,7 @@ function Play(props) {
         selectedCard={selectedCard}
       />
       <PlayButton
-        myTurn={myTurn}
+        disabled={!myTurn || props.disabled}
         play={() =>
           logic.playCard(
             props.gameRef.current,
@@ -78,10 +78,10 @@ function Play(props) {
 function PlayButton(props) {
   return (
     <div>
-      <button onClick={props.play} disabled={!props.myTurn}>
+      <button onClick={props.play} disabled={props.disabled}>
         Play!
       </button>
-      <button onClick={props.pass} disabled={!props.myTurn}>
+      <button onClick={props.pass} disabled={props.disabled}>
         Pass
       </button>
     </div>
@@ -155,6 +155,19 @@ function SelectableDeck(props) {
   );
 }
 
+function GameOver(props) {
+  return (
+    <div>
+      <div style={{ fontSize: "2em" }}>
+        Game is over!!!! {props.winner} won!
+      </div>
+      <button onClick={() => logic.restartGame(props.gameRef.current)}>
+        Play again!
+      </button>
+    </div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
@@ -177,8 +190,19 @@ export function Game(props) {
     <div>
       welcome to the game, {myUserId}!
       <hr />
+      {phase === logic.PHASE.GAMEOVER && (
+        <GameOver
+          gameRef={props.gameRef}
+          winner={logic.getWinner(props.gameRef.current)}
+        />
+      )}
       {phase === logic.PHASE.SETUP && <Setup />}
-      {phase === logic.PHASE.PLAY && <Play gameRef={props.gameRef} />}
+      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
+        <Play
+          gameRef={props.gameRef}
+          disabled={phase === logic.PHASE.GAMEOVER}
+        />
+      )}
       <hr />
       <Chat connRef={props.connRef} />
     </div>
