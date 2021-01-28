@@ -32,7 +32,7 @@ import assert from "./assert.js";
 // TODO: later version: add signatures to actually be secure
 
 // WIRE PROTOCOL:
-// always assume broadcast messages!!!!!!
+// always assume broadcast messages!!!!!! this allows us to assume synchronicity which makes everything so much simpler
 // 1. setup:
 //  1.1 everyone: READY hashOfRandomNumber userID (number is a 64-bit integers, user id is randomly generated (later should be public key))
 //  1.2 when everyone you have open connections with say READY: START randomNumber  (userID is sent with every message)
@@ -68,6 +68,8 @@ import assert from "./assert.js";
 //      playerHands (id -> array),
 //      state = {"waitforplay", "waitforack"}
 //      acksReceived = []
+//      lastPlayedCard
+//      lastPlayedUser
 //
 // gameover: (transitions directly to setup.sentReady)
 //      winner = user_id
@@ -270,7 +272,30 @@ function handlePlayMethod(game, m) {
   update(game);
 }
 function handlePlayAckMethod(game, m) {
-  unimplemented();
+  if (game.phase !== PHASE.PLAY) abort(game, "wrong phase");
+  if (game.state !== PLAY_STATE.WAIT_FOR_PLAYACK) abort(game, "wrong state");
+
+  const user = m.user;
+  const from = m.from;
+  const card = m.card;
+
+  // make sure the right user n right card was acked
+  if (user !== game.lastPlayedUser) {
+    abort(game, "tried to ack the wrong user");
+  }
+  if (card.index !== game.lastPlayedCard.index) {
+    abort(game, "tried to ack the wrong card");
+  }
+
+  if (game.acksReceived.includes(from)) {
+    abort(game, "already received ack from this user");
+  }
+
+  // TODO: verify the zk snarks
+
+  game.acksReceived.push(from);
+
+  maybeStopWaitingForAcks(game);
 
   update(game);
 }
@@ -308,6 +333,8 @@ function actuallyPlayCard(game, user, card) {
   );
   game.nextTurn = (game.nextTurn + 1) % game.players.length;
   game.state = PLAY_STATE.WAIT_FOR_PLAYACK;
+  game.lastPlayedCard = card;
+  game.lastPlayedUser = user;
   update(game);
 }
 
@@ -361,6 +388,8 @@ function maybeStopWaitingForAcks(game) {
   if (game.acksReceived.length === game.players.length - 1) {
     game.state = PLAY_STATE.WAIT_FOR_PLAY;
     game.acksReceived = [];
+    game.lastPlayedCard = null;
+    game.lastPlayedUser = null;
     update(game);
   }
 }
@@ -428,6 +457,8 @@ function startGame(game) {
   game.state = PLAY_STATE.WAIT_FOR_PLAY;
 
   game.acksReceived = [];
+  game.lastPlayedCard = null;
+  game.lastPlayedUser = null;
 
   // now we're done :))))))
   game.phase = PHASE.PLAY;

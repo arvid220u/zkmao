@@ -26,6 +26,9 @@ function Play(props) {
     logic.getOppUserId(props.gameRef.current)
   );
   const [selectedCard, setSelectedCard] = useState(null);
+  const [myTurn, setMyTurn] = useState(
+    logic.isMyTurnEnabled(props.gameRef.current)
+  );
   const changeCard = useCallback((e) => {
     setSelectedCard(e.currentTarget.value);
   }, []);
@@ -36,6 +39,7 @@ function Play(props) {
     setOppHand(logic.getOppHand(props.gameRef.current));
     setMyUserId(logic.getMyUserId(props.gameRef.current));
     setOppUserId(logic.getOppUserId(props.gameRef.current));
+    setMyTurn(logic.isMyTurnEnabled(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -58,7 +62,7 @@ function Play(props) {
         selectedCard={selectedCard}
       />
       <PlayButton
-        myTurn={logic.isMyTurnEnabled(props.gameRef.current)}
+        myTurn={myTurn}
         play={() =>
           logic.playCard(
             props.gameRef.current,
