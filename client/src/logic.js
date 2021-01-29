@@ -463,6 +463,8 @@ function enforcePenalties(game, user, penalties) {
       data.playedCards.splice(0, 1);
     }
   }
+  const totalPenalty = penalties.reduce((acc, v) => acc + v.penalty, 0);
+  console.log(`total penalty is: ${totalPenalty}`);
   console.log("right before updating the game:");
   console.log(utils.objectify(game));
   update(game);
