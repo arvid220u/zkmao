@@ -456,8 +456,41 @@ function enforcePenalties(game, user, penalties) {
 function handleFinalizeMethod(game, m) {
   console.log("FINALIZE message received");
   console.log(m);
-  utils.unimplemented();
+
+  if (game.phase !== PHASE.GAMEOVER) return abort(game, "wrong phase");
+  const data = game.data[game.phase];
+
+  const user = m.from;
+  const rule = m.rule;
+
+  if (data.finalizedReceived.includes(user)) {
+    return abort(game, "received two finalized from the same user");
+  }
+
+  // TODO: verify that the tokens were handled correctly here
+
+  game.allRules.push(rule);
+
+  data.finalizedReceived.push(user);
+
+  maybeFinishFinalize(game);
+
   update(game);
+}
+function maybeFinishFinalize(game) {
+  assert(game.phase === PHASE.GAMEOVER, "duh");
+  const data = game.data[game.phase];
+  if (
+    data.finalizedReceived.length ===
+      game.data[PHASE.PLAY].players.length - 1 &&
+    data.sentFinalize
+  ) {
+    console.log("finish finalize");
+    console.log(game);
+    // yay transition out of this
+    data.readyToRestart = true;
+    update(game);
+  }
 }
 function handleAbortMethod(game, m) {
   console.log("ABORTING :(((( SAD");
@@ -702,6 +735,8 @@ export async function submitRule(game, rule, name, selectedToken) {
 
   data.sentFinalize = true;
 
+  maybeFinishFinalize(game);
+
   update(game);
 }
 function startGame(game) {
@@ -769,7 +804,6 @@ export function getMyUserId(game) {
 export function getOppUserId(game) {
   const data = game.data[PHASE.PLAY];
   const oppUserId = data.players.filter((x) => x !== getMyUserId(game))[0];
-  console.log(`opp user id: ${oppUserId}`);
   return oppUserId;
 }
 export function getMyHand(game) {
@@ -779,8 +813,6 @@ export function getMyHand(game) {
 export function getOppHand(game) {
   const data = game.data[PHASE.PLAY];
   const playerHand = data.playerHands[getOppUserId(game)];
-  console.log("player hand!");
-  console.log(JSON.stringify(playerHand));
   return [...playerHand];
 }
 function isMyTurn(game) {
