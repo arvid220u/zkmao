@@ -36,11 +36,17 @@ export function createTokenState(players) {
   const tokenState = {
     tokenHash: {},
     myTokens: initialTokens(),
+    tokenStats: {},
   };
   for (const user of players) {
     tokenState.tokenHash[user] = tokenNumToHash(
       tokenListToNum(initialTokens())
     );
+    tokenState.tokenStats[user] = {
+      [TOKEN_STATE.STOCK]: NUM_TOKENS,
+      [TOKEN_STATE.HAND]: 0,
+      [TOKEN_STATE.DISCARDED]: 0,
+    };
   }
   return tokenState;
 }
