@@ -110,7 +110,7 @@ function Play(props) {
 function SelectRule(props) {
   return (
     <div style={{ marginTop: "5px", marginBottom: "7px" }}>
-      rules:{props.rules.length === 0 ? " (none)" : ""}
+      actions:{props.rules.length === 0 ? " (none)" : ""}
       <div className="SelectRule">
         {props.rules.map((rule, index) => {
           return (
@@ -255,10 +255,12 @@ function GameOver(props) {
 
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>game over!! {winner} won!</div>
+      <div style={{ fontSize: "2em" }}>
+        game over!! {winner === props.userId ? "you" : winner} won!
+      </div>
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
-      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
+      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens:
       <br />
       <button
         onClick={() => logic.drawTokens(props.gameRef.current)}
@@ -375,16 +377,28 @@ function CreateRule(props) {
 function Rules(props) {
   return (
     <div>
-      rules:{" "}
+      active rules:{" "}
       {props.rules.length > 0 && (
         <ul>
           {props.rules.map((rule) => {
-            return <li key={rule.hash}>{JSON.stringify(rule)}</li>;
+            return (
+              <li key={rule.hash}>
+                <Rule rule={rule} key={rule.hash} />
+              </li>
+            );
           })}
         </ul>
       )}
       {props.rules.length === 0 && <span>(none)</span>}
     </div>
+  );
+}
+function Rule(props) {
+  const rule = props.rule;
+  return (
+    <span title={"hash: " + rule.hash}>
+      {rule.name} (penalty {rule.penalty}, owned by {rule.owner})
+    </span>
   );
 }
 
@@ -435,7 +449,7 @@ export function Game(props) {
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
         <React.Fragment>
-          <GameOver gameRef={props.gameRef} />
+          <GameOver gameRef={props.gameRef} userId={myUserId} />
           <hr />
         </React.Fragment>
       )}

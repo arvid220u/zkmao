@@ -4,3 +4,7 @@ body {
 button {
   margin: 5px;
 }
+ul {
+  list-style-position: inside;
+  margin-top: 0;
+}
