@@ -87,10 +87,9 @@ export async function determinePenalties(
     let response = {};
     response["proof"] = await snarks.prove(snarkInput, "maoRule");
     response["rule"] = publicRule(rule);
-    response["penalty"] =
-      response["proof"]["publicSignals"][
-        response["proof"]["publicSignals"].length - 1
-      ];
+    response["penalty"] = !response["proof"]["publicSignals"][
+      response["proof"]["publicSignals"].length - 1
+    ];
     answer.push(response);
   }
   return answer;
@@ -107,7 +106,7 @@ async function computeSnarkProveInput(
     playedCards.length === 0
       ? 52
       : computeCardIndex(playedCards[playedCards.length]);
-  let lastCard = hand.length;
+  let lastCard = hand.length === 1;
   let hash = rule.hash;
   let src = rule.compiled;
   let gameState = [lastCard, card1, card2];
@@ -124,6 +123,7 @@ export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
 // input:
 //  - card: the card that was played
 //  - playedCards: the cards that have been played so far, not including `card`, 0 is oldest and n-1 is most recently played
+//  - the Hand of the player who is being checked, DOES NOT INCLUDE card
 //  - selectedRules: the rules that the player playing `card` selected
 //  - provedRules: the proof object outputted by determinePenalties
 // output:
@@ -131,10 +131,62 @@ export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
 //      - a list of all the publicrules that were violated
 //  if anything is incorrect:
 //      - INCORRECT_PENALTIES
-export function verifyPenalties(card, playedCards, selectedRules, provedRules) {
-  // TODO: implement this!!! this below is bullshit
-  const violatedRules = [...selectedRules];
-  console.log("VIOLATED RULES:");
-  console.log(violatedRules);
-  return violatedRules;
+export async function verifyPenalties(
+  card,
+  playedCards,
+  hand,
+  selectedRules,
+  provedRules
+) {
+  let rulesActedUpon = {};
+  for (const rule in selectedRules) {
+    rulesActedUpon[rule.hash] = rule;
+  }
+  answer = [];
+  for (const proof in provedRules) {
+    if (
+      !(await verifyPublicSignals(
+        proof["proof"]["publicSignals"],
+        card,
+        playedCards,
+        hand,
+        proof["rule"].hash in rulesActedUpon,
+        proof["rule"].hash
+      )) ||
+      !(await snarks.verify(
+        "maoRule",
+        proof["proof"]["publicSignals"],
+        proof["proof"]["proof"]
+      ))
+    ) {
+      return INCORRECT_PENALTIES;
+    }
+    if (proof["penalty"]) {
+      answer.push(proof["rule"]);
+    }
+  }
+  return answer;
+}
+
+async function verifyPublicSignals(
+  publicSignals,
+  card,
+  playedCards,
+  hand,
+  userAction,
+  ruleHash
+) {
+  let card1 = computeCardIndex(card);
+  let card2 =
+    playedCards.length === 0
+      ? 52
+      : computeCardIndex(playedCards[playedCards.length]);
+  let lastCard = hand.length === 1;
+  return (
+    publicSignals[0] === ruleHash &&
+    publicSignals[1][0] === (lastCard ? 1 : 0) &&
+    publicSignals[1][1] === card1 &&
+    publicSignals[1][2] === card2 &&
+    publicSignals[2] === (userAction ? 1 : 0)
+  );
 }
