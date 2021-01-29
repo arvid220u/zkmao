@@ -351,15 +351,15 @@ export async function verifyPlayedToken(
   //check that stuff make sense
   if (
     proof["publicSignals"][0] !== previousHash ||
-    proof["publicSignals"][2] !== tokenID
+    proof["publicSignals"][2] !== `${tokenID}`
   ) {
     return INCORRECTLY_PLAYED_TOKEN;
   }
 
   //check that public paramaters are good
   if (
-    oldNumCardsInDeck !== proof["publicSignals"][3] ||
-    newNumCardsInDeck !== proof["publicSignals"][4]
+    `${oldNumCardsInDeck}` !== proof["publicSignals"][3] ||
+    `${newNumCardsInDeck}` !== proof["publicSignals"][4]
   ) {
     return INCORRECTLY_PLAYED_TOKEN;
   }
