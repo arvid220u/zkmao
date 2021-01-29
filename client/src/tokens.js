@@ -19,22 +19,22 @@ const TOKEN_STATES = [
   TOKEN_STATE.HAND,
   TOKEN_STATE.DISCARDED,
 ];
-const TOKEN_STATE_NUM = {
+const TOKEN_STATE_BIT = {
   [TOKEN_STATE.STOCK]: 0,
   [TOKEN_STATE.HAND]: 1,
   [TOKEN_STATE.DISCARDED]: 2,
 };
 
+// needs to be same as length of token states
+const NUM_TOKEN_STATES = 3;
+
 // important!! this needs to be the same as the generated snarks
 const NUM_TOKENS = 6;
-
-// TODO: is this correct??
-const ALL_TOKENS_IN_STOCK = 0;
 
 export function createTokenState(players) {
   const tokenState = {
     tokenHash: {},
-    myTokens = initialTokens(),
+    myTokens: initialTokens(),
   };
   for (const user of players) {
     tokenState.tokenHash[user] = tokenNumToHash(
@@ -45,7 +45,7 @@ export function createTokenState(players) {
 
 function initialTokens() {
   // this order determines the power
-  tokens = [
+  const tokens = [
     { tokenPower: 3, state: TOKEN_STATE.STOCK }, // 3^0
     { tokenPower: 2, state: TOKEN_STATE.STOCK }, // 3^1
     { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^2
@@ -61,13 +61,30 @@ function tokenListToNum(tokens) {
   let num = 0;
   let pwr3 = 1;
   for (const token of tokens) {
-    num += pwr3 * tokenStateToNum(token.state);
-    pwr3 = pwr3 * 3;
+    num += pwr3 * tokenStateToBit(token.state);
+    pwr3 = pwr3 * NUM_TOKEN_STATES;
   }
 }
-function tokenStateToNum(tokenState) {
-  assert(Object.keys(TOKEN_STATE_NUM).includes(tokenState), "uh");
-  return TOKEN_STATE_NUM[tokenState];
+function tokenNumToList(tokenNum) {
+  // reverse of tokenListToNum
+  let num = tokenNum;
+  let tokens = initialTokens();
+  for (const token of tokens) {
+    let bit = num % NUM_TOKEN_STATES;
+    num = Math.floor(num / NUM_TOKEN_STATES);
+    let tokenState = tokenBitToState(bit);
+    token.state = tokenState;
+  }
+  assert(num === 0, "should be 0 lol");
+  return tokens;
+}
+function tokenStateToBit(tokenState) {
+  assert(Object.keys(TOKEN_STATE_BIT).includes(tokenState), "uh");
+  return TOKEN_STATE_BIT[tokenState];
+}
+function tokenBitToState(tokenBit) {
+  assert(0 <= tokenBit && tokenBit < NUM_TOKEN_STATES, "uh");
+  return TOKEN_STATES[tokenBit];
 }
 function tokenNumToHash(tokenNum) {
   // TODO: hash this in the mimc way lol

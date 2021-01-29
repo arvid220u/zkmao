@@ -7,6 +7,7 @@ import * as utils from "./utils.js";
 import * as cards from "./cards.js";
 import * as config from "./config.js";
 import * as rules from "./rules.js";
+import * as tokens from "./tokens.js";
 
 import assert from "./assert.js";
 
@@ -137,6 +138,9 @@ export function createGame(conn) {
     // rule data
     myRules: [],
     allRules: [],
+
+    // token state (filled in first when all players are known)
+    tokenState: null,
   };
   for (const phase of PHASES) {
     game.data[phase] = {};
@@ -693,6 +697,11 @@ function sendStart(game) {
 
   data.startNumbers[game.userId] = data.myRandom;
   data.state = SETUP_STATE.SENT_START;
+
+  // here we want to create a token object if one doesn't already exist
+  if (game.tokenState === null) {
+    game.tokenState = tokens.createTokenState(data.players);
+  }
 
   maybeStartGame(game);
 
