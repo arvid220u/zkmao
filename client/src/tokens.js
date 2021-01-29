@@ -201,7 +201,7 @@ export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 //      - drawnToken (output of draw)
 //      - user (the id of the user who drew the token)
 // output:
-//   if everything correct:
+//   if everything correct (need to check that tokenState.tokenHashes reflects the old hash value!):
 //      - true
 //   if incorrect proof:
 //      - INCORRECTLY_DRAWN_TOKEN
@@ -221,6 +221,8 @@ export async function verifyDrawnToken(tokenState, drawnToken, user) {
 // side effects:
 //    - update tokenState.myTokens to reflect the newly played token
 export async function play(tokenState, token) {
+  tokenState.myTokens.filter((t) => t.id === token.id)[0].state =
+    TOKEN_STATE.DISCARDED;
   return {
     newTokenHash: "lol",
     proof: "this is supposed to be a snark proof lol",
@@ -233,7 +235,7 @@ export async function play(tokenState, token) {
 //      - tokenID (the id of the token being played)
 //      - user (the id of the user who played the token)
 // output:
-//   if everything correct:
+//   if everything correct (including verifying that tokenID is indeed the input to playedToken!):
 //      - true
 //   if incorrect proof:
 //      - INCORRECTLY_PLAYED_TOKEN

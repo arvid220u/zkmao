@@ -469,7 +469,7 @@ function enforcePenalties(game, user, penalties) {
   console.log(utils.objectify(game));
   update(game);
 }
-function handleFinalizeMethod(game, m) {
+async function handleFinalizeMethod(game, m) {
   console.log("FINALIZE message received");
   console.log(m);
 
@@ -478,15 +478,44 @@ function handleFinalizeMethod(game, m) {
 
   const user = m.from;
   const rule = m.rule;
+  const drawnTokens = m.drawnTokens;
+  const tokenID = m.tokenID;
+  const playedToken = m.playedToken;
 
   if (data.finalizedReceived.includes(user)) {
     return abort(game, "received two finalized from the same user");
   }
 
-  // TODO: verify that the tokens were handled correctly here
+  // verify that the drawn tokens are correct
+  for (const drawnToken of drawnTokens) {
+    const verification = await tokens.verifyDrawnToken(
+      game.tokenState,
+      drawnToken,
+      user
+    );
+    if (verification === tokens.INCORRECTLY_DRAWN_TOKEN) {
+      return abort(game, "token was not drawn correctly");
+    }
+  }
 
   if (rule) {
     game.allRules.push(rule);
+    const verification = await tokens.verifyPlayedToken(
+      game.tokenState,
+      playedToken,
+      tokenID,
+      user
+    );
+    if (verification === tokens.INCORRECTLY_PLAYED_TOKEN) {
+      return abort(game, "token was not played correctly");
+    }
+    // check that the rule has the correct penalty given the played tokenID
+    if (rule.penalty !== tokens.tokenIdToPower(tokenID)) {
+      return abort(
+        game,
+        "token was played correctly, but an unrelated penalty was used for the rule lol"
+      );
+    }
   }
 
   data.finalizedReceived.push(user);
@@ -799,7 +828,6 @@ export async function submitRule(game, rule, name, selectedToken) {
 
     rulethings = {
       rule: publicRule,
-      tokenHash: game.tokenState.tokenHashes[game.userId],
       tokenID: selectedToken.id,
       playedToken,
     };
