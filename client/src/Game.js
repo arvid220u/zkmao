@@ -267,7 +267,7 @@ function GameOver(props) {
         onClick={() => logic.drawTokens(props.gameRef.current)}
         disabled={!readyToDrawTokens}
       >
-        Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+        draw {nTokens} token{nTokens === 1 ? "" : "s"}!
       </button>
       <CreateRule
         tokens={myAvailableTokens}

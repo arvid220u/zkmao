@@ -28,16 +28,17 @@ function Create2(props) {
 
   return (
     <div>
-      send this message to your friend: <code>{props.offer}</code>
-      <br />
-      input their answer:{" "}
+      1. send this key to your friend: <code>{props.offer}</code>
+      <hr />
+      2. input their key:{" "}
       <input
         type="text"
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
         onKeyUp={(e) => (e.key === "Enter" ? onAddPlayer() : 0)}
+        placeholder="(paste key here)"
       ></input>
-      <button onClick={onAddPlayer}>add player</button>
+      <button onClick={onAddPlayer}>connect</button>
     </div>
   );
 }
@@ -56,6 +57,7 @@ function Join1(props) {
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
         onKeyUp={(e) => (e.key === "Enter" ? onJoin() : 0)}
+        placeholder="(paste key here)"
       ></input>
       <button onClick={onJoin}>join game</button>
     </div>
@@ -65,7 +67,7 @@ function Join1(props) {
 function Join2(props) {
   return (
     <div>
-      send this message to your friend: <code>{props.answer}</code>
+      1. send this key to your friend: <code>{props.answer}</code>
       <br />
     </div>
   );
