@@ -42,6 +42,9 @@ export async function compileUserRule(rule) {
   }
   compiledRule[29] = BigInt(Math.floor(1000000 * Math.random()));
   console.log("result of compiling " + rule + "is");
+  for (var i = 0; i < 30; i++) {
+    compiledRule[i] = `${compiledRule[i]}`;
+  }
   console.log(compiledRule);
   return compiledRule;
 }
