@@ -76,3 +76,23 @@ export function determinePenalties(card, playedCards, selectedRules, myRules) {
     };
   });
 }
+
+export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
+
+// input:
+//  - card: the card that was played
+//  - playedCards: the cards that have been played so far, not including `card`, 0 is oldest and n-1 is most recently played
+//  - selectedRules: the rules that the player playing `card` selected
+//  - provedRules: the proof object outputted by determinePenalties
+// output:
+//  if all provedRules were correct:
+//      - a list of all the publicrules that were violated
+//  if anything is incorrect:
+//      - INCORRECT_PENALTIES
+export function verifyPenalties(card, playedCards, selectedRules, provedRules) {
+  // TODO: implement this!!! this below is bullshit
+  const violatedRules = [...selectedRules];
+  console.log("VIOLATED RULES:");
+  console.log(violatedRules);
+  return violatedRules;
+}
