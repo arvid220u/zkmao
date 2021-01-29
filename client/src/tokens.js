@@ -104,6 +104,9 @@ function tokenNumToHash(tokenNum) {
   // TODO: hash this in the mimc way lol
   return 0;
 }
+export function tokenIdToPower(tokenId) {
+  return initialTokens().filter((t) => t.id === tokenId)[0].tokenPower;
+}
 
 export function serializeTokens(tokens) {
   return tokens.map((t) => `${t.tokenPower}`).join(",");

@@ -773,9 +773,18 @@ export async function submitRule(game, rule, name, selectedToken) {
       verification !== tokens.INCORRECTLY_PLAYED_TOKEN,
       "token must be drawn correctly"
     );
+    assert(
+      selectedToken.tokenPower === tokens.tokenIdToPower(selectedToken.id),
+      "id must match the power"
+    );
 
     // create a rule
-    const compiledRule = await rules.createPrivateRule(name, rule, game.userId);
+    const compiledRule = await rules.createPrivateRule(
+      name,
+      rule,
+      game.userId,
+      selectedToken.tokenPower
+    );
     game.myRules.push(compiledRule);
     const publicRule = rules.publicRule(compiledRule);
     game.allRules.push(publicRule);
