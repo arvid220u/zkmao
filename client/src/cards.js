@@ -116,6 +116,11 @@ export function deserializeCard(cardstr) {
     index: suit_index * 13 + rank_index,
   };
 }
+
+export function computeCardIndex(card) {
+  return card === VOID_CARD ? 52 : deserializeCard(card).index;
+}
+
 export function serializeCardASCII(card) {
   return card.rank + card.suit.charAt(0).toUpperCase();
 }
