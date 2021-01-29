@@ -363,6 +363,7 @@ function handlePlayMethod(game, m) {
   const penalties = rules.verifyPenalties(
     card,
     data.playedCards,
+    data.playerHands[user].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     provedRules
   );
@@ -417,6 +418,7 @@ function handlePlayAckMethod(game, m) {
   const penalties = rules.verifyPenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     data.lastSelectedRules,
     provedRules
   );
@@ -530,7 +532,8 @@ export function playCard(game, card, selectedRules) {
   );
   const penalties = rules.verifyPenalties(
     card,
-    data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playedCards,
+    data.playerHands[game.userId].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     provedRules
   );
@@ -624,6 +627,7 @@ function sendPlayAck(game, user, card, selectedRules) {
   const penalties = rules.verifyPenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     selectedRules,
     provedRules
   );
