@@ -118,7 +118,7 @@ export function deserializeCard(cardstr) {
 }
 
 export function computeCardIndex(card) {
-  return card === VOID_CARD ? 52 : deserializeCard(card).index;
+  return card === VOID_CARD ? 52 : card.index;
 }
 
 export function serializeCardASCII(card) {
