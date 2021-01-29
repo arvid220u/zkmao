@@ -37,11 +37,17 @@ export function createTokenState(players) {
   const tokenState = {
     tokenHash: {},
     myTokens: initialTokens(),
+    tokenStats: {},
   };
   for (const user of players) {
     tokenState.tokenHash[user] = tokenNumToHash(
       tokenListToNum(initialTokens())
     );
+    tokenState.tokenStats[user] = {
+      [TOKEN_STATE.STOCK]: NUM_TOKENS,
+      [TOKEN_STATE.HAND]: 0,
+      [TOKEN_STATE.DISCARDED]: 0,
+    };
   }
   return tokenState;
 }
@@ -49,16 +55,16 @@ export function createTokenState(players) {
 export function initialTokens() {
   // this order determines the power
   const tokens = [
-    { tokenPower: 3, state: TOKEN_STATE.STOCK }, // 3^0
-    { tokenPower: 2, state: TOKEN_STATE.STOCK }, // 3^1
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^2
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^3
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^4
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^5
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^6
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^7
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^8
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^9
+    { tokenPower: 3, state: TOKEN_STATE.STOCK, id: 0 }, // 3^0
+    { tokenPower: 2, state: TOKEN_STATE.STOCK, id: 1 }, // 3^1
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 2 }, // 3^2
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 3 }, // 3^3
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 4 }, // 3^4
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 5 }, // 3^5
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 6 }, // 3^6
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 7 }, // 3^7
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 8 }, // 3^8
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 9 }, // 3^9
   ];
   assert(tokens.length === NUM_TOKENS, "tokens must be sameeeee");
   return tokens;
@@ -179,6 +185,7 @@ export async function draw(
 }
 
 export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
+export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 
 // input:
 //      - tokenState (see top of this file)
@@ -194,5 +201,42 @@ export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
 //      - update tokenState.tokenHashes to reflect the new hash
 //      - update tokenState.tokenStats to reflect the newly drawn token
 export async function verifyDrawnToken(tokenState, drawnToken, user) {
+  return true;
+}
+
+// input:
+//      - tokenState (see top of file)
+//      - token (the token you want to play)
+// output:
+//     {newTokenHash: , proof: }
+// side effects:
+//    - update tokenState.myTokens to reflect the newly played token
+export async function play(tokenState, token) {
+  return {
+    newTokenHash: "lol",
+    proof: "this is supposed to be a snark proof lol",
+  };
+}
+
+// input:
+//      - tokenState (see top of this file)
+//      - playedToken (output of play)
+//      - tokenID (the id of the token being played)
+//      - user (the id of the user who played the token)
+// output:
+//   if everything correct:
+//      - true
+//   if incorrect proof:
+//      - INCORRECTLY_PLAYED_TOKEN
+// side effects:
+//   if everything correct:
+//      - update tokenState.tokenHashes to reflect the new hash
+//      - update tokenState.tokenStats to reflect the newly played token
+export async function verifyPlayedToken(
+  tokenState,
+  playedToken,
+  tokenID,
+  user
+) {
   return true;
 }

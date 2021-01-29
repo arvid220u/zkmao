@@ -1,9 +1,9 @@
 import "./Game.css";
 import React from "react";
 import { useCallback, useRef, useEffect, useState } from "react";
-import * as p2p from "./p2p.js";
 import * as logic from "./logic.js";
 import * as cards from "./cards.js";
+import * as utils from "./utils.js";
 import * as rules from "./rules.js";
 import * as tokens from "./tokens.js";
 
@@ -52,7 +52,7 @@ function Play(props) {
 
   const updateGameState = useCallback(() => {
     console.log("updating game state in Play :))))))");
-    console.log(JSON.parse(JSON.stringify(props.gameRef.current)));
+    console.log(utils.objectify(props.gameRef.current));
     setPlayedCards(logic.getPlayedCards(props.gameRef.current));
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));
@@ -230,7 +230,13 @@ function GameOver(props) {
     logic.isReadyToDrawTokens(props.gameRef.current)
   );
   const [nTokens, setNtokens] = useState(
-    logic.myNumTokens(props.gameRef.current)
+    logic.myAwardedTokens(props.gameRef.current)
+  );
+  const [myAvailableTokens, setMyAvailableTokens] = useState(
+    logic.myAvailableTokens(props.gameRef.current)
+  );
+  const [canSubmit, setCanSubmit] = useState(
+    logic.canSubmitRule(props.gameRef.current)
   );
 
   const updateGameState = useCallback(() => {
@@ -238,7 +244,9 @@ function GameOver(props) {
     setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
     setEndedWithCards(logic.getMyHand(props.gameRef.current).length);
     setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
-    setNtokens(logic.myNumTokens(props.gameRef.current));
+    setNtokens(logic.myAwardedTokens(props.gameRef.current));
+    setMyAvailableTokens(logic.myAvailableTokens(props.gameRef.current));
+    setCanSubmit(logic.canSubmitRule(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -251,11 +259,6 @@ function GameOver(props) {
   return (
     <div>
       <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
-      {readyToRestart && (
-        <button onClick={() => logic.restartGame(props.gameRef.current)}>
-          Play again!
-        </button>
-      )}
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
       {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
@@ -264,6 +267,90 @@ function GameOver(props) {
         disabled={!readyToDrawTokens}
       >
         Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+      </button>
+      <CreateRule
+        tokens={myAvailableTokens}
+        gameRef={props.gameRef}
+        canSubmit={canSubmit}
+      />
+      {readyToRestart && (
+        <button onClick={() => logic.restartGame(props.gameRef.current)}>
+          Play again!
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CreateRule(props) {
+  const [rule, setRule] = useState("");
+  const [selectedToken, setSelectedToken] = useState(null);
+  const [ruleName, setRuleName] = useState("");
+
+  const zeroTokens = props.tokens.filter((t) => t.tokenPower > 0).length === 0;
+
+  return (
+    <div>
+      create a rule:
+      <br />
+      {props.tokens
+        .filter((t) => t.tokenPower > 0)
+        .map((token, index) => {
+          return (
+            <React.Fragment key={`token${index}`}>
+              <input
+                type="radio"
+                name="tokens"
+                value={token.tokenPower}
+                checked={selectedToken.id === token.id}
+                onChange={() => setSelectedToken(token)}
+                id={token.id}
+                key={`tokeninp${index}`}
+              />
+              <label htmlFor={token.id} key={`tokenlab${index}`}>
+                {token.tokenPower}
+              </label>
+            </React.Fragment>
+          );
+        })}
+      {zeroTokens && (
+        <React.Fragment>
+          <span>
+            you don't have any valuable tokens so you can't create any rules :(
+          </span>
+          <br />
+        </React.Fragment>
+      )}
+      <input
+        type="text"
+        value={ruleName}
+        onChange={(e) => setRuleName(e.target.value)}
+        placeholder="(rule name)"
+        disabled={!props.canSubmit || zeroTokens}
+      />
+      <br />
+      <textarea
+        value={rule}
+        onChange={(e) => setRule(e.target.value)}
+        placeholder="(rule code)"
+        disabled={!props.canSubmit || zeroTokens}
+      />
+      <br />
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
+        }
+        disabled={!props.canSubmit || zeroTokens}
+      >
+        Create rule!
+      </button>
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, null, null, null)
+        }
+        disabled={!props.canSubmit}
+      >
+        Skip creating a rule
       </button>
     </div>
   );

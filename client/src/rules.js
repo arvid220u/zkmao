@@ -1,6 +1,10 @@
+/* global BigInt */
 // rules
 
 import * as utils from "./utils.js";
+import * as snarks from "./snarks.js";
+import mimcHash from "./mimc.ts";
+import { computeCardIndex } from "./cards.js";
 
 // rule is a struct containing:
 //  - name: name of the rule
@@ -22,10 +26,10 @@ export async function createPrivateRule(name, source, owner) {
     name,
     source,
     owner,
-    compiled: compileSource(source),
+    compiled: await compileSource(source),
     hash: null,
   };
-  rule.hash = await hashCompiledSource(rule.compiled);
+  rule.hash = `${await mimcHash(...rule.compiled)}`;
   return rule;
 }
 export function publicRule(rule) {
@@ -38,18 +42,10 @@ export function publicRule(rule) {
   return publicRule;
 }
 
-// TODO: implement this
-function compileSource(source) {
+async function compileSource(source) {
   console.log("compiling source:");
   console.log(source);
-  utils.unimplemented();
-
-  return [1, 1, 1, 1, 1, 1 * source.length];
-}
-// TODO: implement this
-async function hashCompiledSource(compiled) {
-  // should hash in the same way as the snark is doing
-  return await utils.hash(JSON.stringify(compiled));
+  return await utils.compileUserRule(source);
 }
 
 export function sameRule(r1, r2) {
@@ -59,22 +55,63 @@ export function sameRule(r1, r2) {
 // input:
 //  - card: the card that was played
 //  - playedCards: the cards that have been played so far, not including `card`, 0 is oldest and n-1 is most recently played
+//  - the Hand of the player who is being checked, DOES NOT INCLUDE card
 //  - selectedRules: the rules that the player playing `card` selected
 //  - myRules: the private rules (including source code) that we know of and want to check for
 // output:
 //  - a list `provedRules` of length myRules.length, such that provedRules[i] is an object on the form:
 //      {rule: (publicrule object), proof: (snarkproof), penalty: (0 or 1)}
 //    where `rule` is the public rule version of each rule in `myRules`
-export function determinePenalties(card, playedCards, selectedRules, myRules) {
-  // TODO: implement this
-
-  return myRules.map((rule) => {
-    return {
-      rule: publicRule(rule),
-      proof: "this is supposed to be a snark proof",
-      penalty: 0,
-    };
-  });
+export async function determinePenalties(
+  card,
+  playedCards,
+  hand,
+  selectedRules,
+  myRules
+) {
+  let rulesActedUpon = {};
+  for (let rule of selectedRules) {
+    rulesActedUpon[rule.hash] = rule;
+  }
+  let answer = [];
+  for (let rule of myRules) {
+    let snarkInput = await computeSnarkProveInput(
+      card,
+      playedCards,
+      hand,
+      rule,
+      rule.hash in rulesActedUpon
+    );
+    let response = {};
+    response["proof"] = await snarks.prove(snarkInput, "maoRule");
+    response["rule"] = publicRule(rule);
+    response["penalty"] = response["proof"]["publicSignals"][0] === "0";
+    answer.push(response);
+  }
+  return answer;
+}
+async function computeSnarkProveInput(
+  card,
+  playedCards,
+  hand,
+  rule,
+  userAction
+) {
+  let card1 = computeCardIndex(card);
+  let card2 =
+    playedCards.length === 0
+      ? 52
+      : computeCardIndex(playedCards[playedCards.length - 1]);
+  let lastCard = hand.length === 1;
+  let hash = rule.hash;
+  let src = rule.compiled;
+  let gameState = [lastCard, card1, card2];
+  return {
+    rule: src,
+    ruleHash: hash,
+    gameState: gameState,
+    userAction: userAction,
+  };
 }
 
 export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
@@ -82,6 +119,7 @@ export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
 // input:
 //  - card: the card that was played
 //  - playedCards: the cards that have been played so far, not including `card`, 0 is oldest and n-1 is most recently played
+//  - the Hand of the player who is being checked, DOES NOT INCLUDE card
 //  - selectedRules: the rules that the player playing `card` selected
 //  - provedRules: the proof object outputted by determinePenalties
 // output:
@@ -89,10 +127,67 @@ export const INCORRECT_PENALTIES = "INCORRECT_PENALTIES";
 //      - a list of all the publicrules that were violated
 //  if anything is incorrect:
 //      - INCORRECT_PENALTIES
-export function verifyPenalties(card, playedCards, selectedRules, provedRules) {
-  // TODO: implement this!!! this below is bullshit
-  const violatedRules = [...selectedRules];
-  console.log("VIOLATED RULES:");
-  console.log(violatedRules);
-  return violatedRules;
+export async function verifyPenalties(
+  card,
+  playedCards,
+  hand,
+  selectedRules,
+  provedRules
+) {
+  let rulesActedUpon = {};
+  for (const rule of selectedRules) {
+    rulesActedUpon[rule.hash] = rule;
+  }
+  let answer = [];
+  for (const proof of provedRules) {
+    if (
+      !(await verifyPublicSignals(
+        proof["proof"]["publicSignals"],
+        card,
+        playedCards,
+        hand,
+        proof["rule"].hash in rulesActedUpon,
+        proof["rule"].hash
+      )) ||
+      !(await snarks.verify(
+        "maoRule",
+        proof["proof"]["publicSignals"],
+        proof["proof"]["proof"]
+      ))
+    ) {
+      return INCORRECT_PENALTIES;
+    }
+    if (proof["penalty"]) {
+      answer.push(proof["rule"]);
+    }
+  }
+  return answer;
+}
+
+async function verifyPublicSignals(
+  publicSignals,
+  card,
+  playedCards,
+  hand,
+  userAction,
+  ruleHash
+) {
+  let card1 = `${computeCardIndex(card)}`;
+  let card2 =
+    playedCards.length === 0
+      ? "52"
+      : `${computeCardIndex(playedCards[playedCards.length - 1])}`;
+  let lastCard = hand.length === 1;
+  console.log(publicSignals[1] === ruleHash);
+  console.log(publicSignals[2] === (lastCard ? "1" : "0"));
+  console.log(publicSignals[3] === card1);
+  console.log(publicSignals[4] === card2);
+  console.log(publicSignals[5] === (userAction ? "1" : "0"));
+  return (
+    publicSignals[1] === ruleHash &&
+    publicSignals[2] === (lastCard ? "1" : "0") &&
+    publicSignals[3] === card1 &&
+    publicSignals[4] === card2 &&
+    publicSignals[5] === (userAction ? "1" : "0")
+  );
 }
