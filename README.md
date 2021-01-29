@@ -17,6 +17,7 @@ there are two main technologies that makes enables zkmao to be what it is:
 2. you may only play a card if it is of either the same suit or the same rank as the previous card
 3. there are secret rules — if you don't follow them, you will be penalized
 4. after each game, players will be rewarded with tokens. you can spend tokens to create your own personal rule, enforcing penalties on others in subsequent games
+5. never reveal your rules!
 
 # dev
 
