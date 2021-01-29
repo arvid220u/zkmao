@@ -471,7 +471,9 @@ function handleFinalizeMethod(game, m) {
 
   // TODO: verify that the tokens were handled correctly here
 
-  game.allRules.push(rule);
+  if (rule) {
+    game.allRules.push(rule);
+  }
 
   data.finalizedReceived.push(user);
 
@@ -730,12 +732,15 @@ export async function submitRule(game, rule, name, selectedToken) {
 
   update(game);
 
-  // create a rule
-  const compiledRule = await rules.createPrivateRule(name, rule, game.userId);
-  game.myRules.push(compiledRule);
-  const publicRule = rules.publicRule(compiledRule);
-  game.allRules.push(publicRule);
-  update(game);
+  let publicRule = null;
+  if (rule) {
+    // create a rule
+    const compiledRule = await rules.createPrivateRule(name, rule, game.userId);
+    game.myRules.push(compiledRule);
+    publicRule = rules.publicRule(compiledRule);
+    game.allRules.push(publicRule);
+    update(game);
+  }
 
   send(game, { method: METHOD.FINALIZE, rule: publicRule });
 

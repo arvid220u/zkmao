@@ -330,6 +330,14 @@ function CreateRule(props) {
       >
         Create rule!
       </button>
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, null, null, null)
+        }
+        disabled={!props.canSubmit}
+      >
+        Skip creating a rule
+      </button>
     </div>
   );
 }
