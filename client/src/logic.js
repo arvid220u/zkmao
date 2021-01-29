@@ -453,10 +453,15 @@ function enforcePenalties(game, user, penalties) {
   // just take cards from the played cards as long as we can do so
   // take from the bottom
   for (let i = 0; i < penalties.length && data.playedCards.length > 0; i++) {
-    // TODO: make penalties have different worth HERE
-    const bottomCard = data.playedCards[0];
-    data.playerHands[user].push(bottomCard);
-    data.playedCards.splice(0, 1);
+    for (
+      let j = 0;
+      j < penalties[i].penalty && data.playedCards.length > 0;
+      j++
+    ) {
+      const bottomCard = data.playedCards[0];
+      data.playerHands[user].push(bottomCard);
+      data.playedCards.splice(0, 1);
+    }
   }
   console.log("right before updating the game:");
   console.log(utils.objectify(game));
