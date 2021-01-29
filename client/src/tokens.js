@@ -173,12 +173,15 @@ export async function draw(
   );
   console.log(utils.objectify(privateInput));
   let privateOutput = await snarks.prove(privateInput, "drawcardsprivately");
-  let newTokenHash = privateOutput["publicSignals"][2];
-  let oldTokenHash = privateOutput["publicSignals"][1];
+  let newTokenHash = privateOutput["publicSignals"][1];
+  let oldTokenHash = privateOutput["publicSignals"][0];
   assert(
     oldTokenHash === tokenState.tokenHashes[userId],
     "hashes should be same lolol"
   );
+  console.log("SEEEEEEEEED: ");
+  console.log(seed);
+  console.log("SEEEEDCOMMITTTTT:");
   console.log(utils.objectify(privateOutput));
   console.log(oldTokenHash);
   console.log(tokenState.tokenHashes[userId]);
@@ -225,42 +228,47 @@ export async function verifyDrawnToken(
 ) {
   //TODO assign the variables below
   let previousHash = tokenState.tokenHashes[user];
-  let seedCommit = `${await mimcHash(seed)}`;
+  //   let seedCommit = `${await mimcHash(seed)}`;
   let proof = drawnToken["proof"]; // a value in the object returned by the proof function
   let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
   let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK] - 1;
   console.log(
     "HEEEEEEEEEEEEEEEEEEREEEEEEEEEEEEEEEEEEEEEEE\n\n\n\n\n\n\\n\n\n\n\\n\n\n\\n\n\n"
   );
-  console.log(proof["publicSignals"][1]);
+  console.log(proof["publicSignals"][0]);
   console.log(previousHash);
   console.log(proof["publicSignals"]);
   console.log(
     "HEEEEEEEEEEEEEEEEEEREEEEEEEEEEEEEEEEEEEEEEE\n\n\n\n\n\n\\n\n\n\n\\n\n\n\\n\n\n"
   );
+  console.log("SEEEEEEEEED: ");
+  console.log(seed);
 
   //check that stuff make sense
-  if (
-    proof["publicSignals"][1] !== previousHash ||
-    seedCommit !== proof["publicSignals"][0]
-  ) {
+  if (proof["publicSignals"][0] !== previousHash) {
     console.log("Oh noo");
     console.log(1);
-    console.log(seedCommit !== proof["publicSignals"][0]);
-    console.log(proof["publicSignals"][1] !== previousHash);
+    // console.log(seedCommit);
+    // console.log(seedCommit !== proof["publicSignals"][0]);
+    console.log(proof["publicSignals"][0] !== previousHash);
 
     return INCORRECTLY_DRAWN_TOKEN;
   }
 
   //check that public paramaters are good
   if (
-    oldNumCardsInDeck !== proof["publicSignals"][3] ||
-    newNumCardsInDeck !== proof["publicSignals"][4] ||
-    opponentRandomness !== proof["publicSignals"][5] ||
-    nonce !== proof["publicSignals"][6]
+    `${oldNumCardsInDeck}` !== proof["publicSignals"][2] ||
+    `${newNumCardsInDeck}` !== proof["publicSignals"][3] ||
+    `${seed}` !== proof["publicSignals"][4] ||
+    `${opponentRandomness}` !== proof["publicSignals"][5] ||
+    `${nonce}` !== proof["publicSignals"][6]
   ) {
     console.log("Oh noooo");
     console.log(2);
+    console.log(oldNumCardsInDeck !== proof["publicSignals"][2]);
+    console.log(newNumCardsInDeck !== proof["publicSignals"][3]);
+    console.log(opponentRandomness !== proof["publicSignals"][4]);
+    console.log(nonce !== proof["publicSignals"][5]);
     return INCORRECTLY_DRAWN_TOKEN;
   }
   //check the proof
@@ -271,7 +279,7 @@ export async function verifyDrawnToken(
   );
 
   //TODO figure side effects out
-  let newHash = proof["publicSignals"][2]; //TODO store this somewhere
+  let newHash = proof["publicSignals"][1]; //TODO store this somewhere
   tokenState.tokenHashes[user] = newHash;
   tokenState.tokenStats[user][TOKEN_STATE.STOCK]--;
   tokenState.tokenStats[user][TOKEN_STATE.HAND]++;
