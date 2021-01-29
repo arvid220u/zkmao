@@ -38,7 +38,7 @@ in both the `client` and the `circuits` directories.
 
 ## `client`
 
-the codebase is... perhaps not the world's prettiest :). most game logic is in `src/logic.js`. note that great care is needed to make sure that the asynchronous p2p communication does not have subtle bugs, and equally great care is needed to make sure that the snarks and all their public signals are fully verified. it is a somewhat fragile system.
+the codebase is... perhaps not the world's prettiest :). most game logic is in `src/logic.js`. note that great care is needed to make sure that the asynchronous p2p communication does not have subtle bugs, and equally great care is needed to make sure that the snarks and all their public signals are fully verified. it is a somewhat fragile system. we believe that it is bug-free and safe, but we also acknowledge that much of the code was written at 4 am in the morning so who knows how safe it is ¯\_(ツ)_/¯
 
 ## `circuits`
 
