@@ -69,14 +69,12 @@ export async function determinePenalties(
   selectedRules,
   myRules
 ) {
-  // TODO: implement this
-
   let rulesActedUpon = {};
-  for (const rule in selectedRules) {
+  for (let rule of selectedRules) {
     rulesActedUpon[rule.hash] = rule;
   }
   let answer = [];
-  for (const rule in myRules) {
+  for (let rule of myRules) {
     let snarkInput = await computeSnarkProveInput(
       card,
       playedCards,
@@ -87,9 +85,7 @@ export async function determinePenalties(
     let response = {};
     response["proof"] = await snarks.prove(snarkInput, "maoRule");
     response["rule"] = publicRule(rule);
-    response["penalty"] = !response["proof"]["publicSignals"][
-      response["proof"]["publicSignals"].length - 1
-    ];
+    response["penalty"] = response["proof"]["publicSignals"][0] === "0";
     answer.push(response);
   }
   return answer;
@@ -105,7 +101,7 @@ async function computeSnarkProveInput(
   let card2 =
     playedCards.length === 0
       ? 52
-      : computeCardIndex(playedCards[playedCards.length]);
+      : computeCardIndex(playedCards[playedCards.length - 1]);
   let lastCard = hand.length === 1;
   let hash = rule.hash;
   let src = rule.compiled;
@@ -139,11 +135,11 @@ export async function verifyPenalties(
   provedRules
 ) {
   let rulesActedUpon = {};
-  for (const rule in selectedRules) {
+  for (const rule of selectedRules) {
     rulesActedUpon[rule.hash] = rule;
   }
   let answer = [];
-  for (const proof in provedRules) {
+  for (const proof of provedRules) {
     if (
       !(await verifyPublicSignals(
         proof["proof"]["publicSignals"],
@@ -176,17 +172,23 @@ async function verifyPublicSignals(
   userAction,
   ruleHash
 ) {
-  let card1 = computeCardIndex(card);
+  let card1 = `${computeCardIndex(card)}`;
   let card2 =
     playedCards.length === 0
-      ? 52
-      : computeCardIndex(playedCards[playedCards.length]);
+      ? "52"
+      : `${computeCardIndex(playedCards[playedCards.length - 1])}`;
   let lastCard = hand.length === 1;
+  console.log("shit wave");
+  console.log(publicSignals[1] === ruleHash);
+  console.log(publicSignals[2] === (lastCard ? "1" : "0"));
+  console.log(publicSignals[3] === card1);
+  console.log(publicSignals[4] === card2);
+  console.log(publicSignals[5] === (userAction ? "1" : "0"));
   return (
-    publicSignals[0] === ruleHash &&
-    publicSignals[1][0] === (lastCard ? 1 : 0) &&
-    publicSignals[1][1] === card1 &&
-    publicSignals[1][2] === card2 &&
-    publicSignals[2] === (userAction ? 1 : 0)
+    publicSignals[1] === ruleHash &&
+    publicSignals[2] === (lastCard ? "1" : "0") &&
+    publicSignals[3] === card1 &&
+    publicSignals[4] === card2 &&
+    publicSignals[5] === (userAction ? "1" : "0")
   );
 }
