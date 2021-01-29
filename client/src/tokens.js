@@ -1,5 +1,6 @@
 import assert from "./assert.js";
-
+import mimcHash from "./mimc.ts";
+import * as snarks from "./snarks.js";
 // we store a tokenState object.
 // a tokenState object has the following:
 //      1. tokenHashes: {userId -> tokenHash}
@@ -45,7 +46,7 @@ export function createTokenState(players) {
   return tokenState;
 }
 
-function initialTokens() {
+export function initialTokens() {
   // this order determines the power
   const tokens = [
     { tokenPower: 3, state: TOKEN_STATE.STOCK }, // 3^0
@@ -120,7 +121,57 @@ export function awardFunction(numCards) {
 //  - {newTokenHash: , proof: }
 // side effects:
 //  - update tokenState.myTokens to reflect the newly drawn token
-export async function draw(tokenState) {
+export async function draw(
+  tokenState,
+  salt1,
+  salt2,
+  seed,
+  opponentRandomness,
+  nonce,
+  userId
+) {
+  let oldCardState = tokenListToNum(tokenState.myTokens);
+  let hash1 = mimcHash(seed, opponentRandomness, nonce) % 32;
+  let oldNumCardsInDeck = tokenState.tokenStats[userId]["stock"];
+  let cardToPick = hash1 % oldNumCardsInDeck;
+  let idToState = {};
+  for (var token of tokenState.myTokens) {
+    idToState[token.id] = token.state;
+  }
+  let answer = null;
+  let counter = 0;
+  for (var i = 0; i < tokenState.myTokens.length; i++) {
+    if (idToState[i] === TOKEN_STATE.STOCK) {
+      counter++;
+    }
+    if (counter - cardToPick === 1) {
+      answer = i;
+      break;
+    }
+  }
+  let newCardState = oldCardState + 3 ** answer;
+  let newNumCardsInDeck = oldNumCardsInDeck + 1;
+  let oldCommit = mimcHash(oldCardState, oldNumCardsInDeck, salt1);
+  let newCommit = mimcHash(newCardState, newNumCardsInDeck, salt2);
+  let seedCommit = mimcHash(seed);
+
+  let drawInput = {
+    oldCardstate: `${oldCardState}`,
+    oldNumCardsInDeck: `${oldNumCardsInDeck}`,
+    newCardstate: `${newCardState}`,
+    newNumCardsInDeck: `${newNumCardsInDeck}`,
+    seed: `${seed}`,
+    salt1: `${salt1}`,
+    salt2: `${salt2}`,
+    opponentRandomness: `${opponentRandomness}`,
+    nonce: `${nonce}`,
+  };
+  console.log("expected public signal");
+  console.log([seedCommit, oldCommit, newCommit, opponentRandomness, nonce]);
+  console.log(
+    await snarks.prove("drawcardsprivately", drawInput)["publicSignal"]
+  );
+
   return {
     newTokenHash: "lol",
     proof: "this is supposed to be a snark proof lol",

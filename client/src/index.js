@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import mimcHash from "./mimc.ts";
+import * as tokens from "./tokens.js";
 ReactDOM.render(
   <React.StrictMode>
     <App />
@@ -11,40 +11,10 @@ ReactDOM.render(
   document.getElementById("root")
 );
 
-console.log(
-  mimcHash(
-    803469022129495137770981046170581301261101496891396417650688,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-  )
-);
+let tokenState = tokens.createTokenState([1, 2]);
+tokens
+  .draw(tokenState, 0, 0, 0, 0, 0, 1)
+  .then((res) => console.log("n\n\n\\n\n\n\n\\n\n\n\n\n"));
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
