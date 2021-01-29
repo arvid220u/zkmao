@@ -1,5 +1,6 @@
 .SelectableDeck input {
   visibility: hidden;
+  display: none;
 }
 .SelectableDeck label {
   cursor: pointer;
@@ -13,6 +14,7 @@
 
 .SelectRule input {
   visibility: hidden;
+  display: none;
 }
 .SelectRule label {
   cursor: pointer;

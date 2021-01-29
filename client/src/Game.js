@@ -10,7 +10,7 @@ import * as tokens from "./tokens.js";
 import { Chat } from "./Chat.js";
 
 function Setup() {
-  return <div>Waiting for everyone else to press start...</div>;
+  return <div>waiting for everyone else to press start...</div>;
 }
 
 function Play(props) {
@@ -142,10 +142,10 @@ function PlayButton(props) {
   return (
     <div>
       <button onClick={props.play} disabled={props.disabled}>
-        Play!
+        play!
       </button>
       <button onClick={props.pass} disabled={props.disabled}>
-        Pass
+        pass
       </button>
     </div>
   );
@@ -184,7 +184,7 @@ function Deck(props) {
     return <div>(none)</div>;
   }
   return (
-    <div style={{ fontSize: "3em" }}>{cards.serializeDeck(props.cards)}</div>
+    <div style={{ fontSize: "4em" }}>{cards.serializeDeck(props.cards)}</div>
   );
 }
 function SelectableDeck(props) {
@@ -192,7 +192,7 @@ function SelectableDeck(props) {
     return <div>(none)</div>;
   }
   return (
-    <div style={{ fontSize: "3em" }} className="SelectableDeck">
+    <div style={{ fontSize: "4em" }} className="SelectableDeck">
       {props.cards.map((card, index) => {
         return (
           <React.Fragment key={`mycardsfragment${index}`}>
