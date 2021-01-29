@@ -1,0 +1,241 @@
+include "../node_modules/circomlib/circuits/comparators.circom"
+include "../modulo/libcircuit.circom"
+
+template AccessBit20(numCards, base){
+  signal private input idx;
+  signal private input number;
+  
+  signal output bit;
+  signal quotients[numCards + 1];
+  quotients[0] <== number;
+  signal bits[numCards];
+  
+  assert (idx < numCards);
+  
+    component mod_0 = Modulo(100); // TODO: change this magic number!!!!
+    mod_0.n <== quotients[0];
+    mod_0.m <== base;
+    bits[0] <== mod_0.remainder;
+    quotients[0 + 1] <== mod_0.quotient;
+  
+    component mod_1 = Modulo(100); // TODO: change this magic number!!!!
+    mod_1.n <== quotients[1];
+    mod_1.m <== base;
+    bits[1] <== mod_1.remainder;
+    quotients[1 + 1] <== mod_1.quotient;
+  
+    component mod_2 = Modulo(100); // TODO: change this magic number!!!!
+    mod_2.n <== quotients[2];
+    mod_2.m <== base;
+    bits[2] <== mod_2.remainder;
+    quotients[2 + 1] <== mod_2.quotient;
+  
+    component mod_3 = Modulo(100); // TODO: change this magic number!!!!
+    mod_3.n <== quotients[3];
+    mod_3.m <== base;
+    bits[3] <== mod_3.remainder;
+    quotients[3 + 1] <== mod_3.quotient;
+  
+    component mod_4 = Modulo(100); // TODO: change this magic number!!!!
+    mod_4.n <== quotients[4];
+    mod_4.m <== base;
+    bits[4] <== mod_4.remainder;
+    quotients[4 + 1] <== mod_4.quotient;
+  
+    component mod_5 = Modulo(100); // TODO: change this magic number!!!!
+    mod_5.n <== quotients[5];
+    mod_5.m <== base;
+    bits[5] <== mod_5.remainder;
+    quotients[5 + 1] <== mod_5.quotient;
+  
+    component mod_6 = Modulo(100); // TODO: change this magic number!!!!
+    mod_6.n <== quotients[6];
+    mod_6.m <== base;
+    bits[6] <== mod_6.remainder;
+    quotients[6 + 1] <== mod_6.quotient;
+  
+    component mod_7 = Modulo(100); // TODO: change this magic number!!!!
+    mod_7.n <== quotients[7];
+    mod_7.m <== base;
+    bits[7] <== mod_7.remainder;
+    quotients[7 + 1] <== mod_7.quotient;
+  
+    component mod_8 = Modulo(100); // TODO: change this magic number!!!!
+    mod_8.n <== quotients[8];
+    mod_8.m <== base;
+    bits[8] <== mod_8.remainder;
+    quotients[8 + 1] <== mod_8.quotient;
+  
+    component mod_9 = Modulo(100); // TODO: change this magic number!!!!
+    mod_9.n <== quotients[9];
+    mod_9.m <== base;
+    bits[9] <== mod_9.remainder;
+    quotients[9 + 1] <== mod_9.quotient;
+  
+    component mod_10 = Modulo(100); // TODO: change this magic number!!!!
+    mod_10.n <== quotients[10];
+    mod_10.m <== base;
+    bits[10] <== mod_10.remainder;
+    quotients[10 + 1] <== mod_10.quotient;
+  
+    component mod_11 = Modulo(100); // TODO: change this magic number!!!!
+    mod_11.n <== quotients[11];
+    mod_11.m <== base;
+    bits[11] <== mod_11.remainder;
+    quotients[11 + 1] <== mod_11.quotient;
+  
+    component mod_12 = Modulo(100); // TODO: change this magic number!!!!
+    mod_12.n <== quotients[12];
+    mod_12.m <== base;
+    bits[12] <== mod_12.remainder;
+    quotients[12 + 1] <== mod_12.quotient;
+  
+    component mod_13 = Modulo(100); // TODO: change this magic number!!!!
+    mod_13.n <== quotients[13];
+    mod_13.m <== base;
+    bits[13] <== mod_13.remainder;
+    quotients[13 + 1] <== mod_13.quotient;
+  
+    component mod_14 = Modulo(100); // TODO: change this magic number!!!!
+    mod_14.n <== quotients[14];
+    mod_14.m <== base;
+    bits[14] <== mod_14.remainder;
+    quotients[14 + 1] <== mod_14.quotient;
+  
+    component mod_15 = Modulo(100); // TODO: change this magic number!!!!
+    mod_15.n <== quotients[15];
+    mod_15.m <== base;
+    bits[15] <== mod_15.remainder;
+    quotients[15 + 1] <== mod_15.quotient;
+  
+    component mod_16 = Modulo(100); // TODO: change this magic number!!!!
+    mod_16.n <== quotients[16];
+    mod_16.m <== base;
+    bits[16] <== mod_16.remainder;
+    quotients[16 + 1] <== mod_16.quotient;
+  
+    component mod_17 = Modulo(100); // TODO: change this magic number!!!!
+    mod_17.n <== quotients[17];
+    mod_17.m <== base;
+    bits[17] <== mod_17.remainder;
+    quotients[17 + 1] <== mod_17.quotient;
+  
+    component mod_18 = Modulo(100); // TODO: change this magic number!!!!
+    mod_18.n <== quotients[18];
+    mod_18.m <== base;
+    bits[18] <== mod_18.remainder;
+    quotients[18 + 1] <== mod_18.quotient;
+  
+    component mod_19 = Modulo(100); // TODO: change this magic number!!!!
+    mod_19.n <== quotients[19];
+    mod_19.m <== base;
+    bits[19] <== mod_19.remainder;
+    quotients[19 + 1] <== mod_19.quotient;
+  
+  quotients[numCards] === 0;
+  signal sum[numCards + 1];
+  sum[0] <== 0;
+  
+    component eq_0 = IsEqual();
+    eq_0.in[0] <== 0;
+    eq_0.in[1] <== idx;
+    sum[0+1] <== sum[0] + eq_0.out*bits[0];
+  
+    component eq_1 = IsEqual();
+    eq_1.in[0] <== 1;
+    eq_1.in[1] <== idx;
+    sum[1+1] <== sum[1] + eq_1.out*bits[1];
+  
+    component eq_2 = IsEqual();
+    eq_2.in[0] <== 2;
+    eq_2.in[1] <== idx;
+    sum[2+1] <== sum[2] + eq_2.out*bits[2];
+  
+    component eq_3 = IsEqual();
+    eq_3.in[0] <== 3;
+    eq_3.in[1] <== idx;
+    sum[3+1] <== sum[3] + eq_3.out*bits[3];
+  
+    component eq_4 = IsEqual();
+    eq_4.in[0] <== 4;
+    eq_4.in[1] <== idx;
+    sum[4+1] <== sum[4] + eq_4.out*bits[4];
+  
+    component eq_5 = IsEqual();
+    eq_5.in[0] <== 5;
+    eq_5.in[1] <== idx;
+    sum[5+1] <== sum[5] + eq_5.out*bits[5];
+  
+    component eq_6 = IsEqual();
+    eq_6.in[0] <== 6;
+    eq_6.in[1] <== idx;
+    sum[6+1] <== sum[6] + eq_6.out*bits[6];
+  
+    component eq_7 = IsEqual();
+    eq_7.in[0] <== 7;
+    eq_7.in[1] <== idx;
+    sum[7+1] <== sum[7] + eq_7.out*bits[7];
+  
+    component eq_8 = IsEqual();
+    eq_8.in[0] <== 8;
+    eq_8.in[1] <== idx;
+    sum[8+1] <== sum[8] + eq_8.out*bits[8];
+  
+    component eq_9 = IsEqual();
+    eq_9.in[0] <== 9;
+    eq_9.in[1] <== idx;
+    sum[9+1] <== sum[9] + eq_9.out*bits[9];
+  
+    component eq_10 = IsEqual();
+    eq_10.in[0] <== 10;
+    eq_10.in[1] <== idx;
+    sum[10+1] <== sum[10] + eq_10.out*bits[10];
+  
+    component eq_11 = IsEqual();
+    eq_11.in[0] <== 11;
+    eq_11.in[1] <== idx;
+    sum[11+1] <== sum[11] + eq_11.out*bits[11];
+  
+    component eq_12 = IsEqual();
+    eq_12.in[0] <== 12;
+    eq_12.in[1] <== idx;
+    sum[12+1] <== sum[12] + eq_12.out*bits[12];
+  
+    component eq_13 = IsEqual();
+    eq_13.in[0] <== 13;
+    eq_13.in[1] <== idx;
+    sum[13+1] <== sum[13] + eq_13.out*bits[13];
+  
+    component eq_14 = IsEqual();
+    eq_14.in[0] <== 14;
+    eq_14.in[1] <== idx;
+    sum[14+1] <== sum[14] + eq_14.out*bits[14];
+  
+    component eq_15 = IsEqual();
+    eq_15.in[0] <== 15;
+    eq_15.in[1] <== idx;
+    sum[15+1] <== sum[15] + eq_15.out*bits[15];
+  
+    component eq_16 = IsEqual();
+    eq_16.in[0] <== 16;
+    eq_16.in[1] <== idx;
+    sum[16+1] <== sum[16] + eq_16.out*bits[16];
+  
+    component eq_17 = IsEqual();
+    eq_17.in[0] <== 17;
+    eq_17.in[1] <== idx;
+    sum[17+1] <== sum[17] + eq_17.out*bits[17];
+  
+    component eq_18 = IsEqual();
+    eq_18.in[0] <== 18;
+    eq_18.in[1] <== idx;
+    sum[18+1] <== sum[18] + eq_18.out*bits[18];
+  
+    component eq_19 = IsEqual();
+    eq_19.in[0] <== 19;
+    eq_19.in[1] <== idx;
+    sum[19+1] <== sum[19] + eq_19.out*bits[19];
+  
+  bit <== sum[numCards];
+}
+component main = AccessBit(10, 3);

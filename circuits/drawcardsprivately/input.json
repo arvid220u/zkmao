@@ -1,11 +1,11 @@
 {
-    "oldCardstate": "0",
-    "oldNumCardsInDeck": "10",
-    "seed": "123",
-    "opponentRandomness": "123321123321",
-    "nonce": "2",
-    "salt1": "123321",
-    "salt2": "321123",
-    "newCardstate": "6561",
-    "newNumCardsInDeck": "9"
+  "oldCardstate": "0",
+  "oldNumCardsInDeck": "10",
+  "seed": "3831223263394509000",
+  "opponentRandomness": "13351152094697590000",
+  "nonce": "0",
+  "salt1": "0",
+  "salt2": "13907622620007550000",
+  "newCardstate": "19683",
+  "newNumCardsInDeck": "9"
 }

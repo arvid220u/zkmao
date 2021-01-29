@@ -70,14 +70,17 @@ export async function determinePenalties(
   playedCards,
   hand,
   selectedRules,
-  myRules
+  myRules,
+  reportStatus
 ) {
   let rulesActedUpon = {};
   for (let rule of selectedRules) {
     rulesActedUpon[rule.hash] = rule;
   }
   let answer = [];
-  for (let rule of myRules) {
+  for (let [index, rule] of myRules.entries()) {
+    let status = `verifying ${rule.name}; rule ${index} of ${myRules.length}.`;
+    reportStatus(status);
     let snarkInput = await computeSnarkProveInput(
       card,
       playedCards,

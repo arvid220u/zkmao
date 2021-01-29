@@ -5,26 +5,20 @@ include "../drawcardspublicly/libcircuit.circom"
 // 0: deck, 1: hand, 2: discarded
 template DrawCardsPrivately(numCards) {
     signal private input oldCardstate;
-    signal private input oldNumCardsInDeck;
+    signal input oldNumCardsInDeck;
     signal private input newCardstate;
-    signal private input newNumCardsInDeck;
-    signal private input seed;
+    signal input newNumCardsInDeck;
+    signal input seed;
     signal private input salt1;
     signal private input salt2;
 
     signal input opponentRandomness;
     signal input nonce;
 
-    signal output seedCommit;
     signal output oldCommit;
     signal output newCommit;
 
     /* prove commits are correct */
-    component mimcSeed = MiMCSponge(1, 220, 1);
-    mimcSeed.ins[0] <== seed;
-    mimcSeed.k <== 0;
-    seedCommit <== mimcSeed.outs[0];
-
     component mimcOld = MiMCSponge(3, 220, 1);
     mimcOld.ins[0] <== oldCardstate;
     mimcOld.ins[1] <== oldNumCardsInDeck;

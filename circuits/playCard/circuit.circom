@@ -5,9 +5,9 @@ include "../accessBit/libcircuit.circom"
 template PlayCards(numCards){
    signal private input oldCardState;
    signal private input newCardState;
-   signal private input cardNumber;
-   signal private input oldNumCardsInDeck;
-   signal private input newNumCardsInDeck;
+   signal input cardNumber;
+   signal input oldNumCardsInDeck;
+   signal input newNumCardsInDeck;
    signal private input salt1;
    signal private input salt2;
 
