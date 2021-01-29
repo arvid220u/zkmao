@@ -35,12 +35,12 @@ const NUM_TOKENS = 10;
 
 export function createTokenState(players) {
   const tokenState = {
-    tokenHash: {},
+    tokenHashes: {},
     myTokens: initialTokens(),
     tokenStats: {},
   };
   for (const user of players) {
-    tokenState.tokenHash[user] = tokenNumToHash(
+    tokenState.tokenHashes[user] = tokenNumToHash(
       tokenListToNum(initialTokens())
     );
     tokenState.tokenStats[user] = {
@@ -136,6 +136,12 @@ export async function draw(
   nonce,
   userId
 ) {
+  const r = Math.floor(Math.random() * 10);
+  tokenState.myTokens[r].state = TOKEN_STATE.HAND;
+  return {
+    newTokenHash: "blablablabla",
+    proof: "snarkjs proof lolol",
+  };
   let oldCardState = tokenListToNum(tokenState.myTokens);
   let hash1 = mimcHash(seed, opponentRandomness, nonce) % 32;
   let oldNumCardsInDeck = tokenState.tokenStats[userId]["stock"];

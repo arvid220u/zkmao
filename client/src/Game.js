@@ -293,6 +293,7 @@ function CreateRule(props) {
     <div>
       create a rule:
       <br />
+      {!zeroTokens && "token (# penalty cards):"}{" "}
       {props.tokens
         .filter((t) => t.tokenPower > 0)
         .map((token, index) => {
@@ -302,7 +303,9 @@ function CreateRule(props) {
                 type="radio"
                 name="tokens"
                 value={token.tokenPower}
-                checked={selectedToken.id === token.id}
+                checked={
+                  selectedToken === null ? false : selectedToken.id === token.id
+                }
                 onChange={() => setSelectedToken(token)}
                 id={token.id}
                 key={`tokeninp${index}`}
@@ -313,6 +316,7 @@ function CreateRule(props) {
             </React.Fragment>
           );
         })}
+      {!zeroTokens && <br />}
       {zeroTokens && (
         <React.Fragment>
           <span>
@@ -337,9 +341,23 @@ function CreateRule(props) {
       />
       <br />
       <button
-        onClick={() =>
-          logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
-        }
+        onClick={() => {
+          if (selectedToken === null) {
+            return alert("pls select a token");
+          }
+          if (ruleName === "") {
+            return alert("pls enter a rule name");
+          }
+          if (rule === "") {
+            return alert("pls enter rule code");
+          }
+          logic.submitRule(
+            props.gameRef.current,
+            rule,
+            ruleName,
+            selectedToken
+          );
+        }}
         disabled={!props.canSubmit || zeroTokens}
       >
         Create rule!
