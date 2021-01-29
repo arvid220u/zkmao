@@ -32,6 +32,9 @@ function Play(props) {
     logic.isMyTurnEnabled(props.gameRef.current)
   );
   const [selectedRules, setSelectedRules] = useState([]);
+  const [snarkStatus, setSnarkStatus] = useState(
+    logic.getSnarkStatus(props.gameRef.current)
+  );
 
   const changeCard = useCallback((e) => {
     setSelectedCard(e.currentTarget.value);
@@ -59,6 +62,7 @@ function Play(props) {
     setMyUserId(logic.getMyUserId(props.gameRef.current));
     setOppUserId(logic.getOppUserId(props.gameRef.current));
     setMyTurn(logic.isMyTurnEnabled(props.gameRef.current));
+    setSnarkStatus(logic.getSnarkStatus(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -103,8 +107,12 @@ function Play(props) {
           setSelectedCard(null);
         }}
       />
+      {snarkStatus && <Loading text={snarkStatus} />}
     </div>
   );
+}
+function Loading(props) {
+  return <div>{props.text}...</div>;
 }
 
 function SelectRule(props) {

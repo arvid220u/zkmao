@@ -53,6 +53,7 @@ import assert from "./assert.js";
 //      lastPlayedUser
 //      lastSelectedRules
 //      penaltyRules
+//      snarkStatus
 //
 // gameover: (transitions directly to setup.sentReady (only if received all finalized))
 //      winner = user_id
@@ -203,6 +204,7 @@ function resetPhase(game, phase, args) {
     data.lastPlayedUser = null;
     data.lastSelectedRules = null;
     data.penaltyRules = [];
+    data.snarkStatus = null;
   } else if (phase === PHASE.GAMEOVER) {
     data.winner = args.winner;
     data.sentFinalize = false;
@@ -990,4 +992,15 @@ export function canSubmitRule(game) {
   if (game.phase !== PHASE.GAMEOVER) return false;
   const data = game.data[PHASE.GAMEOVER];
   return !data.sentFinalize && !data.compilingRule;
+}
+
+export function getSnarkStatus(game) {
+  if (game.phase !== PHASE.PLAY) return null;
+  const data = game.data[game.phase];
+  return data.snarkStatus;
+}
+
+export function updateSnarkStatus(game, status) {
+  if (game.phase !== PHASE.PLAY) return;
+  game.data[game.phase].snarkStatus = status;
 }
