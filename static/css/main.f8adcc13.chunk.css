@@ -1,0 +1,2 @@
+body{background-color:rgba(0,0,0,.1)}button{margin:5px}ul{list-style-position:inside;margin-top:0}.App{text-align:center}.SelectableDeck input{visibility:hidden;display:none}.SelectableDeck label{cursor:pointer;border-radius:3px;padding:0 2px 2px;margin:2px 0}.SelectableDeck input:checked+label{background:rgba(49,245,0,.692)}.SelectRule input{visibility:hidden;display:none}.SelectRule label{cursor:pointer;border-radius:3px;padding:2px 6px;margin:2px}.SelectRule input:checked+label{background:rgba(49,245,0,.692)}
+/*# sourceMappingURL=main.f8adcc13.chunk.css.map */
