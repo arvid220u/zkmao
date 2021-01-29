@@ -9,6 +9,8 @@ const pathToSnarks = "circuits/";
  * An object containing the proof and public signals
  */
 export async function prove(circuitInput, circuitName) {
+  console.log(circuitInput);
+  console.log(circuitName);
   return await snarkjs.groth16.fullProve(
     circuitInput,
     pathToSnarks.concat(circuitName, "/compiled-circuit/circuit.wasm"),
