@@ -1,6 +1,7 @@
 import assert from "./assert.js";
 import mimcHash from "./mimc.ts";
 import * as snarks from "./snarks.js";
+import * as utils from "./utils.js";
 // we store a tokenState object.
 // a tokenState object has the following:
 //      1. tokenHashes: {userId -> tokenHash}
@@ -41,7 +42,9 @@ export async function createTokenState(players) {
   };
   for (const user of players) {
     tokenState.tokenHashes[user] = await tokenNumToHash(
-      tokenListToNum(initialTokens(), NUM_TOKENS, 0)
+      tokenListToNum(initialTokens()),
+      NUM_TOKENS,
+      0
     );
     tokenState.tokenStats[user] = {
       [TOKEN_STATE.STOCK]: NUM_TOKENS,
@@ -102,7 +105,7 @@ function tokenBitToState(tokenBit) {
 }
 async function tokenNumToHash(tokenNum, numCards, salt) {
   // TODO: hash this in the mimc way lol
-  return await mimcHash(tokenNum, numCards, salt);
+  return `${await mimcHash(tokenNum, numCards, salt)}`;
 }
 export function tokenIdToPower(tokenId) {
   return initialTokens().filter((t) => t.id === tokenId)[0].tokenPower;
@@ -159,14 +162,27 @@ export async function draw(
   let newCardState = publicOutput[0];
   let newNumCardsInDeck = publicOutput[1];
 
-  let privateInput = Object.create(publicInput);
+  let privateInput = { ...publicInput };
   privateInput["newCardstate"] = `${newCardState}`;
   privateInput["newNumCardsInDeck"] = `${newNumCardsInDeck}`;
   privateInput["salt1"] = `${salt1}`;
   privateInput["salt2"] = `${salt2}`;
 
+  console.log(
+    "qowierjfpoiqwejgfpowqejpoqwejfpoqwejfpioqwejfpoqwejfpoiqwefjpoiqwejf"
+  );
+  console.log(utils.objectify(privateInput));
   let privateOutput = await snarks.prove(privateInput, "drawcardsprivately");
   let newTokenHash = privateOutput["publicSignals"][2];
+  let oldTokenHash = privateOutput["publicSignals"][1];
+  assert(
+    oldTokenHash === tokenState.tokenHashes[userId],
+    "hashes should be same lolol"
+  );
+  console.log(utils.objectify(privateOutput));
+  console.log(oldTokenHash);
+  console.log(tokenState.tokenHashes[userId]);
+  console.log(utils.objectify(tokenState));
 
   //TODO update the tokenHash stuff
   let power = Math.round(
@@ -209,16 +225,30 @@ export async function verifyDrawnToken(
 ) {
   //TODO assign the variables below
   let previousHash = tokenState.tokenHashes[user];
-  let seedCommit = mimcHash(seed);
+  let seedCommit = `${await mimcHash(seed)}`;
   let proof = drawnToken["proof"]; // a value in the object returned by the proof function
   let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
   let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK] - 1;
+  console.log(
+    "HEEEEEEEEEEEEEEEEEEREEEEEEEEEEEEEEEEEEEEEEE\n\n\n\n\n\n\\n\n\n\n\\n\n\n\\n\n\n"
+  );
+  console.log(proof["publicSignals"][1]);
+  console.log(previousHash);
+  console.log(proof["publicSignals"]);
+  console.log(
+    "HEEEEEEEEEEEEEEEEEEREEEEEEEEEEEEEEEEEEEEEEE\n\n\n\n\n\n\\n\n\n\n\\n\n\n\\n\n\n"
+  );
 
   //check that stuff make sense
   if (
     proof["publicSignals"][1] !== previousHash ||
     seedCommit !== proof["publicSignals"][0]
   ) {
+    console.log("Oh noo");
+    console.log(1);
+    console.log(seedCommit !== proof["publicSignals"][0]);
+    console.log(proof["publicSignals"][1] !== previousHash);
+
     return INCORRECTLY_DRAWN_TOKEN;
   }
 
@@ -229,6 +259,8 @@ export async function verifyDrawnToken(
     opponentRandomness !== proof["publicSignals"][5] ||
     nonce !== proof["publicSignals"][6]
   ) {
+    console.log("Oh noooo");
+    console.log(2);
     return INCORRECTLY_DRAWN_TOKEN;
   }
   //check the proof
