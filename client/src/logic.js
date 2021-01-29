@@ -815,7 +815,7 @@ function startGame(game) {
   // use this random number as the seed of an rng
   let rng = seedrandom(`${finalRandomNumber}`);
 
-  game.playerRandoms = [...data.startNumbers];
+  game.playerRandoms = { ...data.startNumbers };
 
   // now we can transition to the game phase
   // delete the old game object properties
