@@ -146,7 +146,6 @@ export async function draw(
   nonce,
   userId
 ) {
-
   let publicInput = {
     oldCardstate: `${tokenListToNum(tokenState.myTokens)}`,
     oldNumCardsInDeck: `${tokenState.tokenStats[userId][TOKEN_STATE.STOCK]}`,
@@ -170,7 +169,13 @@ export async function draw(
   let newTokenHash = privateOutput["publicSignals"][2];
 
   //TODO update the tokenHash stuff
-
+  let power = Math.round(Math.log(newCardState - oldCardstate) / Math.log(3));
+  assert(
+    tokenState.myTokens.filter((t) => t.id === power)[0].state ===
+      TOKEN_STATE.STOCK,
+    "this should ne with the player"
+  );
+  tokenState.myTokens.filter((t) => t.id === power)[0].state = TOKEN_STATE.HAND;
   return {
     newTokenHash: `${newTokenHash}`,
     proof: privateOutput,
