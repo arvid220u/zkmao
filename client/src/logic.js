@@ -147,6 +147,8 @@ export function createGame(conn) {
   }
   initPhase(game, PHASE.SETUP);
   setUpPublicRules(game);
+  console.log("PERSISTENT GAME OBJECT:");
+  console.log(game);
   return game;
 }
 function setUpPublicRules(game) {
@@ -752,4 +754,11 @@ export function getWinner(game) {
 
 export function getRules(game) {
   return [...game.allRules];
+}
+
+export function getMyTokens(game) {
+  if (game.tokenState === null) {
+    return null;
+  }
+  return [...game.tokenState.myTokens];
 }

@@ -9,7 +9,7 @@ import assert from "./assert.js";
 
 // FIRST SALT ALWAYS HAS TO BE THE SAME!!!!!!
 
-const TOKEN_STATE = {
+export const TOKEN_STATE = {
   STOCK: "STOCK", // 0
   HAND: "HAND", // 1
   DISCARDED: "DISCARDED", // 2
@@ -41,6 +41,7 @@ export function createTokenState(players) {
       tokenListToNum(initialTokens())
     );
   }
+  return tokenState;
 }
 
 function initialTokens() {
@@ -64,6 +65,7 @@ function tokenListToNum(tokens) {
     num += pwr3 * tokenStateToBit(token.state);
     pwr3 = pwr3 * NUM_TOKEN_STATES;
   }
+  return num;
 }
 function tokenNumToList(tokenNum) {
   // reverse of tokenListToNum
@@ -89,4 +91,8 @@ function tokenBitToState(tokenBit) {
 function tokenNumToHash(tokenNum) {
   // TODO: hash this in the mimc way lol
   return 0;
+}
+
+export function serializeTokens(tokens) {
+  return tokens.map((t) => `${t.tokenPower}`).join(",");
 }

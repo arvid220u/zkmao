@@ -5,6 +5,7 @@ import * as p2p from "./p2p.js";
 import * as logic from "./logic.js";
 import * as cards from "./cards.js";
 import * as rules from "./rules.js";
+import * as tokens from "./tokens.js";
 
 import { Chat } from "./Chat.js";
 
@@ -241,17 +242,38 @@ function Rules(props) {
   );
 }
 
+function Tokens(props) {
+  const tokenStock = props.tokens.filter(
+    (token) => token.state === tokens.TOKEN_STATE.STOCK
+  );
+  const myTokens = props.tokens.filter(
+    (token) => token.state === tokens.TOKEN_STATE.HAND
+  );
+
+  return (
+    <div>
+      my tokens:{" "}
+      {myTokens.length === 0 ? "none" : tokens.serializeTokens(myTokens)}{" "}
+      (available tokens: {tokens.serializeTokens(tokenStock)})
+    </div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
     logic.getMyUserId(props.gameRef.current)
   );
   const [rules, setRules] = useState(logic.getRules(props.gameRef.current));
+  const [tokens, setTokens] = useState(
+    logic.getMyTokens(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setPhase(props.gameRef.current.phase);
     setMyUserId(logic.getMyUserId(props.gameRef.current));
     setRules(logic.getRules(props.gameRef.current));
+    setTokens(logic.getMyTokens(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -281,6 +303,7 @@ export function Game(props) {
         </React.Fragment>
       )}
       <Rules rules={rules} />
+      {tokens && <Tokens tokens={tokens} />}
       <hr />
       {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
         <React.Fragment>
