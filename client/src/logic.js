@@ -11,27 +11,6 @@ import * as tokens from "./tokens.js";
 
 import assert from "./assert.js";
 
-// what's the game state?
-// there's a public part and a private part
-// the public part needs to be agreed upon among all players
-// the private part is
-//
-// PUBLIC:
-// for version 1:
-// 1: the middle deck, which has order
-// 2: each player's hand, which does not have order
-//      invariant: all disjoint, union is all cards
-//
-// for version 2:
-// 3: all the rule hashes
-// 4:
-//
-// PRIVATE:
-// for version 2:
-// 1: your own rules (which is in the form of uhhhh)
-//
-//
-//
 // TODO: later version: add signatures to actually be secure
 
 // WIRE PROTOCOL:
@@ -44,12 +23,11 @@ import assert from "./assert.js";
 // 2. play:
 //  2.1 someone: PLAY card userID rules provedRules (same as for playack, need to show you enforce rules consistently even for yourself)
 //  2.2 everyone else: PLAYACK card user userID provedRules (rulehash, snark proof, for each rule you know)
-// 3. abort:
+// 3. gameover: (when someone gets 0 cards)
+//  3.1 everyone: FINALIZE tokenHash drawTokenProof newRule (rule, power, spendTokenProof)
+//      (can then send READY to transition into setup phase)
+// 4. abort:
 //  3.1 send ABORT userID to every user, be sad
-
-// ok dont overthink it
-// i think having a hierarchical state thing makes sense
-// this is javascript not rust
 
 // we assume that messages come to people in the order they are sent
 // i.e. we assume that channels are FIFO
@@ -78,6 +56,7 @@ import assert from "./assert.js";
 //
 // gameover: (transitions directly to setup.sentReady)
 //      winner = user_id
+//      state = {"preFinalize", } TODO
 //
 // abort:
 //      (no data)
