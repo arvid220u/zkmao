@@ -85,3 +85,12 @@ export async function hash(message) {
     .join(""); // convert bytes to hex string
   return hashHex;
 }
+
+export function objectify(obj) {
+  return JSON.parse(
+    JSON.stringify(
+      obj,
+      (_, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged
+    )
+  );
+}
