@@ -29,7 +29,7 @@ const TOKEN_STATE_BIT = {
 const NUM_TOKEN_STATES = 3;
 
 // important!! this needs to be the same as the generated snarks
-const NUM_TOKENS = 6;
+const NUM_TOKENS = 10;
 
 export function createTokenState(players) {
   const tokenState = {
@@ -53,6 +53,10 @@ function initialTokens() {
     { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^3
     { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^4
     { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^5
+    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^6
+    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^7
+    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^8
+    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^9
   ];
   assert(tokens.length === NUM_TOKENS, "tokens must be sameeeee");
   return tokens;
