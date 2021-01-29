@@ -243,6 +243,9 @@ function GameOver(props) {
   const [canSubmit, setCanSubmit] = useState(
     logic.canSubmitRule(props.gameRef.current)
   );
+  const [snarkStatus, setSnarkStatus] = useState(
+    logic.getTokenSnarkStatus(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setWinner(logic.getWinner(props.gameRef.current));
@@ -252,6 +255,7 @@ function GameOver(props) {
     setNtokens(logic.myAwardedTokens(props.gameRef.current));
     setMyAvailableTokens(logic.myAvailableTokens(props.gameRef.current));
     setCanSubmit(logic.canSubmitRule(props.gameRef.current));
+    setSnarkStatus(logic.getTokenSnarkStatus(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -286,6 +290,7 @@ function GameOver(props) {
           play again!
         </button>
       )}
+      {snarkStatus && <Loading text={snarkStatus} />}
     </div>
   );
 }

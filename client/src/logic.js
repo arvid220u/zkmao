@@ -63,6 +63,7 @@ import assert from "./assert.js";
 //      didDrawTokens = true/false
 //      drawnTokens = []
 //      compilingRule = true/false
+//      snarkStatus
 //
 // abort:
 //      (no data)
@@ -213,6 +214,7 @@ function resetPhase(game, phase, args) {
     data.didDrawTokens = false;
     data.drawnTokens = [];
     data.compilingRule = false;
+    data.snarkStatus = null;
   }
   game.data[phase] = data;
 }
@@ -751,6 +753,7 @@ export async function drawTokens(game) {
 
   for (let i = 0; i < numtokens; i++) {
     const newSalt = Math.floor(Math.random() * 2 ** 64);
+    updateTokenSnarkStatus(game, `drawing token ${i + 1} of ${numtokens}`);
     const drawnToken = await tokens.draw(
       game.tokenState,
       game.prevSalt,
@@ -776,6 +779,7 @@ export async function drawTokens(game) {
     );
     update(game);
   }
+  updateTokenSnarkStatus(game, null);
 }
 
 function maybeStartGame(game) {
@@ -1018,6 +1022,18 @@ export function getSnarkStatus(game) {
 
 export function updateSnarkStatus(game, status) {
   if (game.phase !== PHASE.PLAY) return;
+  game.data[game.phase].snarkStatus = status;
+  update(game);
+}
+
+export function getTokenSnarkStatus(game) {
+  if (game.phase !== PHASE.GAMEOVER) return null;
+  const data = game.data[game.phase];
+  return data.snarkStatus;
+}
+
+export function updateTokenSnarkStatus(game, status) {
+  if (game.phase !== PHASE.GAMEOVER) return;
   game.data[game.phase].snarkStatus = status;
   update(game);
 }
