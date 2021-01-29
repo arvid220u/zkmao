@@ -127,6 +127,12 @@ export function createGame(conn) {
 
     // token state (filled in first when all players are known)
     tokenState: null,
+
+    numRounds: 0,
+
+    playerRandoms: {},
+
+    prevSalt: 0,
   };
   for (const phase of PHASES) {
     game.data[phase] = {};
@@ -590,6 +596,7 @@ export async function playCard(game, card, selectedRules) {
 
 export function restartGame(game) {
   game.phase = PHASE.SETUP;
+  game.numRounds++;
 
   sendReady(game);
 }
@@ -699,7 +706,17 @@ export async function drawTokens(game) {
   console.log(`drawing ${numtokens} tokens!`);
 
   for (let i = 0; i < numtokens; i++) {
-    const drawnToken = await tokens.draw(game.tokenState);
+    const newSalt = Math.floor(Math.random() * 2 ** 64);
+    const drawnToken = await tokens.draw(
+      game.tokenState,
+      game.prevSalt,
+      newSalt,
+      game.playerRandoms[game.userId],
+      game.playerRandoms[getOppUserId(game)],
+      game.numRounds,
+      game.userId
+    );
+    game.prevSalt = newSalt;
     data.drawnTokens.push(drawnToken);
     const verification = await tokens.verifyDrawnToken(
       game.tokenState,
@@ -797,6 +814,8 @@ function startGame(game) {
   console.log(`final randomness: ${finalRandomNumber}`);
   // use this random number as the seed of an rng
   let rng = seedrandom(`${finalRandomNumber}`);
+
+  game.playerRandoms = [...data.startNumbers];
 
   // now we can transition to the game phase
   // delete the old game object properties
