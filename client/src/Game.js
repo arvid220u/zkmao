@@ -10,7 +10,7 @@ import * as tokens from "./tokens.js";
 import { Chat } from "./Chat.js";
 
 function Setup() {
-  return <div>Waiting for everyone else to press start...</div>;
+  return <div>waiting for everyone else to press start...</div>;
 }
 
 function Play(props) {
@@ -32,6 +32,9 @@ function Play(props) {
     logic.isMyTurnEnabled(props.gameRef.current)
   );
   const [selectedRules, setSelectedRules] = useState([]);
+  const [snarkStatus, setSnarkStatus] = useState(
+    logic.getSnarkStatus(props.gameRef.current)
+  );
 
   const changeCard = useCallback((e) => {
     setSelectedCard(e.currentTarget.value);
@@ -59,6 +62,7 @@ function Play(props) {
     setMyUserId(logic.getMyUserId(props.gameRef.current));
     setOppUserId(logic.getOppUserId(props.gameRef.current));
     setMyTurn(logic.isMyTurnEnabled(props.gameRef.current));
+    setSnarkStatus(logic.getSnarkStatus(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -103,14 +107,18 @@ function Play(props) {
           setSelectedCard(null);
         }}
       />
+      {snarkStatus && <Loading text={snarkStatus} />}
     </div>
   );
+}
+function Loading(props) {
+  return <div>{props.text}...</div>;
 }
 
 function SelectRule(props) {
   return (
     <div style={{ marginTop: "5px", marginBottom: "7px" }}>
-      rules:
+      actions:{props.rules.length === 0 ? " (none)" : ""}
       <div className="SelectRule">
         {props.rules.map((rule, index) => {
           return (
@@ -142,10 +150,10 @@ function PlayButton(props) {
   return (
     <div>
       <button onClick={props.play} disabled={props.disabled}>
-        Play!
+        play!
       </button>
       <button onClick={props.pass} disabled={props.disabled}>
-        Pass
+        pass
       </button>
     </div>
   );
@@ -153,7 +161,7 @@ function PlayButton(props) {
 
 function PlayedCards(props) {
   return (
-    <div>
+    <div style={{ margin: "5px" }}>
       played cards: <Deck cards={props.cards} />
     </div>
   );
@@ -180,19 +188,14 @@ function MyHand(props) {
   );
 }
 function Deck(props) {
-  if (props.cards.length === 0) {
-    return <div>(none)</div>;
-  }
-  return (
-    <div style={{ fontSize: "3em" }}>{cards.serializeDeck(props.cards)}</div>
-  );
+  return <SelectableDeck cards={props.cards} disabled={true} />;
 }
 function SelectableDeck(props) {
   if (props.cards.length === 0) {
     return <div>(none)</div>;
   }
   return (
-    <div style={{ fontSize: "3em" }} className="SelectableDeck">
+    <div style={{ fontSize: "4em" }} className="SelectableDeck">
       {props.cards.map((card, index) => {
         return (
           <React.Fragment key={`mycardsfragment${index}`}>
@@ -204,10 +207,12 @@ function SelectableDeck(props) {
               onChange={props.changeCard}
               id={cards.serializeCardASCII(card)}
               key={`mycardsradio${index}`}
+              disabled={props.disabled}
             />
             <label
               htmlFor={cards.serializeCardASCII(card)}
               key={`mycardslabel${index}`}
+              style={props.disabled ? { cursor: "default" } : {}}
             >
               {cards.serializeCard(card)}
             </label>
@@ -258,15 +263,18 @@ function GameOver(props) {
 
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
+      <div style={{ fontSize: "2em" }}>
+        game over!! {winner === props.userId ? "you" : winner} won!
+      </div>
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
-      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
+      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens:
+      <br />
       <button
         onClick={() => logic.drawTokens(props.gameRef.current)}
         disabled={!readyToDrawTokens}
       >
-        Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+        draw {nTokens} token{nTokens === 1 ? "" : "s"}!
       </button>
       <CreateRule
         tokens={myAvailableTokens}
@@ -275,7 +283,7 @@ function GameOver(props) {
       />
       {readyToRestart && (
         <button onClick={() => logic.restartGame(props.gameRef.current)}>
-          Play again!
+          play again!
         </button>
       )}
     </div>
@@ -360,7 +368,7 @@ function CreateRule(props) {
         }}
         disabled={!props.canSubmit || zeroTokens}
       >
-        Create rule!
+        create rule!
       </button>
       <button
         onClick={() =>
@@ -368,7 +376,7 @@ function CreateRule(props) {
         }
         disabled={!props.canSubmit}
       >
-        Skip creating a rule
+        skip creating a rule
       </button>
     </div>
   );
@@ -377,13 +385,28 @@ function CreateRule(props) {
 function Rules(props) {
   return (
     <div>
-      Rules:
-      <ul>
-        {props.rules.map((rule) => {
-          return <li key={rule.hash}>{JSON.stringify(rule)}</li>;
-        })}
-      </ul>
+      active rules:{" "}
+      {props.rules.length > 0 && (
+        <ul>
+          {props.rules.map((rule) => {
+            return (
+              <li key={rule.hash}>
+                <Rule rule={rule} key={rule.hash} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {props.rules.length === 0 && <span>(none)</span>}
     </div>
+  );
+}
+function Rule(props) {
+  const rule = props.rule;
+  return (
+    <span title={"hash: " + rule.hash}>
+      {rule.name} (penalty {rule.penalty}, owned by {rule.owner})
+    </span>
   );
 }
 
@@ -434,7 +457,7 @@ export function Game(props) {
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
         <React.Fragment>
-          <GameOver gameRef={props.gameRef} />
+          <GameOver gameRef={props.gameRef} userId={myUserId} />
           <hr />
         </React.Fragment>
       )}
