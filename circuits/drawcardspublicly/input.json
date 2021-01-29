@@ -1,7 +1,7 @@
 {
-    "oldCardstate": "0",
-    "oldNumCardsInDeck": "10",
-    "seed": "123",
-    "opponentRandomness": "123321123321",
-    "nonce": "2"
+  "oldCardstate": "0",
+  "oldNumCardsInDeck": "10",
+  "seed": "2",
+  "opponentRandomness": "3",
+  "nonce": "4"
 }

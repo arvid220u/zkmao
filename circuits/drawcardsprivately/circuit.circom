@@ -5,9 +5,9 @@ include "../drawcardspublicly/libcircuit.circom"
 // 0: deck, 1: hand, 2: discarded
 template DrawCardsPrivately(numCards) {
     signal private input oldCardstate;
-    signal private input oldNumCardsInDeck;
+    signal input oldNumCardsInDeck;
     signal private input newCardstate;
-    signal private input newNumCardsInDeck;
+    signal input newNumCardsInDeck;
     signal private input seed;
     signal private input salt1;
     signal private input salt2;
