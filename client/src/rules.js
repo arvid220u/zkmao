@@ -29,7 +29,7 @@ export async function createPrivateRule(name, source, owner) {
     compiled: await compileSource(source),
     hash: null,
   };
-  rule.hash = await mimcHash(...rule.compiled);
+  rule.hash = `${await mimcHash(...rule.compiled)}`;
   return rule;
 }
 export function publicRule(rule) {
