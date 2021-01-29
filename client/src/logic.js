@@ -144,9 +144,8 @@ export function createGame(conn) {
   return game;
 }
 function setUpPublicRules(game) {
-  // TODO: add more public rules
   rules
-    .createPrivateRule("spades", "card.suit == spades", rules.EVERYONE)
+    .createPrivateRule("spades", "return card1 < 13;", rules.EVERYONE)
     .then((rule) => {
       game.myRules.push(rule);
       const publicRule = rules.publicRule(rule);
@@ -156,7 +155,7 @@ function setUpPublicRules(game) {
     .then(() => {
       return rules.createPrivateRule(
         "lastcard",
-        "isLastCard()",
+        "return lastCard;",
         rules.EVERYONE
       );
     })
