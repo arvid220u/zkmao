@@ -348,7 +348,7 @@ function CreateRule(props) {
       <br />
       <span style={{ fontSize: "0.8em", color: "rgba(0,0,0,0.5)" }}>
         {
-          "function rule(card1: number, card2: number, lastCard: boolean) -> boolean:"
+          "function rule(card1: number, card2: number, lastcard: boolean) -> boolean:"
         }
       </span>
       <br />
