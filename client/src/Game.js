@@ -230,7 +230,10 @@ function GameOver(props) {
     logic.isReadyToDrawTokens(props.gameRef.current)
   );
   const [nTokens, setNtokens] = useState(
-    logic.myNumTokens(props.gameRef.current)
+    logic.myAwardedTokens(props.gameRef.current)
+  );
+  const [myAvailableTokens, setMyAvailableTokens] = useState(
+    logic.myAvailableTokens(props.gameRef.current)
   );
 
   const updateGameState = useCallback(() => {
@@ -238,7 +241,8 @@ function GameOver(props) {
     setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
     setEndedWithCards(logic.getMyHand(props.gameRef.current).length);
     setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
-    setNtokens(logic.myNumTokens(props.gameRef.current));
+    setNtokens(logic.myAwardedTokens(props.gameRef.current));
+    setMyAvailableTokens(logic.myAvailableTokens(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -264,6 +268,43 @@ function GameOver(props) {
         disabled={!readyToDrawTokens}
       >
         Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+      </button>
+      <CreateRule tokens={myAvailableTokens} gameRef={props.gameRef} />
+    </div>
+  );
+}
+
+function CreateRule(props) {
+  const [rule, setRule] = useState("");
+  const [selectedToken, setSelectedToken] = useState(null);
+
+  return (
+    <div>
+      {props.tokens.map((token, index) => {
+        return (
+          <React.Fragment key={`token${index}`}>
+            <input
+              type="radio"
+              name="tokens"
+              value={token.tokenPower}
+              checked={selectedToken.id === token.id}
+              onChange={() => setSelectedToken(token)}
+              id={token.id}
+              key={`tokeninp${index}`}
+            />
+            <label htmlFor={token.id} key={`tokenlab${index}`}>
+              {token.tokenPower}
+            </label>
+          </React.Fragment>
+        );
+      })}
+      <textarea value={rule} onChange={(e) => setRule(e.target.value)} />
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, rule, selectedToken)
+        }
+      >
+        Create rule!
       </button>
     </div>
   );

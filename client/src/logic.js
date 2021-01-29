@@ -653,7 +653,7 @@ export async function drawTokens(game) {
 
   update(game);
 
-  const numtokens = myNumTokens(game);
+  const numtokens = myAwardedTokens(game);
 
   console.log(`drawing ${numtokens} tokens!`);
 
@@ -678,6 +678,19 @@ function maybeStartGame(game) {
   if (data.players.length === Object.keys(data.startNumbers).length) {
     startGame(game);
   }
+}
+export function submitRule(game, rule, selectedToken) {
+  assert(game.phase === PHASE.GAMEOVER, "submit rule only when game over lol");
+  const data = game.data[game.phase];
+  assert(!data.sentFinalize, "cannot submit rules twice!");
+
+  // create a rule
+  console.log("creating a rule:");
+  console.log(rule);
+
+  data.sentFinalize = true;
+
+  update(game);
 }
 function startGame(game) {
   assert(game.phase === PHASE.SETUP);
@@ -800,7 +813,7 @@ export function isReadyToDrawTokens(game) {
   return !data.didDrawTokens;
 }
 
-export function myNumTokens(game) {
+export function myAwardedTokens(game) {
   assert(
     game.phase === PHASE.GAMEOVER,
     "u need to be in gameover to get tokens"
@@ -810,4 +823,13 @@ export function myNumTokens(game) {
     (tok) => tok.state === tokens.TOKEN_STATE.STOCK
   ).length;
   return Math.min(desiredamt, numtokensleft);
+}
+
+export function myAvailableTokens(game) {
+  if (!game.tokenState) return [];
+  return [
+    ...game.tokenState.myTokens.filter(
+      (tok) => tok.state === tokens.TOKEN_STATE.HAND
+    ),
+  ];
 }

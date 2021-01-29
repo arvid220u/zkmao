@@ -48,16 +48,16 @@ export function createTokenState(players) {
 function initialTokens() {
   // this order determines the power
   const tokens = [
-    { tokenPower: 3, state: TOKEN_STATE.STOCK }, // 3^0
-    { tokenPower: 2, state: TOKEN_STATE.STOCK }, // 3^1
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^2
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^3
-    { tokenPower: 1, state: TOKEN_STATE.STOCK }, // 3^4
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^5
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^6
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^7
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^8
-    { tokenPower: 0, state: TOKEN_STATE.STOCK }, // 3^9
+    { tokenPower: 3, state: TOKEN_STATE.STOCK, id: 0 }, // 3^0
+    { tokenPower: 2, state: TOKEN_STATE.STOCK, id: 1 }, // 3^1
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 2 }, // 3^2
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 3 }, // 3^3
+    { tokenPower: 1, state: TOKEN_STATE.STOCK, id: 4 }, // 3^4
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 5 }, // 3^5
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 6 }, // 3^6
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 7 }, // 3^7
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 8 }, // 3^8
+    { tokenPower: 0, state: TOKEN_STATE.STOCK, id: 9 }, // 3^9
   ];
   assert(tokens.length === NUM_TOKENS, "tokens must be sameeeee");
   return tokens;
