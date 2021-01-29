@@ -287,34 +287,36 @@ function CreateRule(props) {
   const [selectedToken, setSelectedToken] = useState(null);
   const [ruleName, setRuleName] = useState("");
 
-  const zeroTokens = props.tokens.length === 0;
+  const zeroTokens = props.tokens.filter((t) => t.tokenPower > 0).length === 0;
 
   return (
     <div>
       create a rule:
       <br />
-      {props.tokens.map((token, index) => {
-        return (
-          <React.Fragment key={`token${index}`}>
-            <input
-              type="radio"
-              name="tokens"
-              value={token.tokenPower}
-              checked={selectedToken.id === token.id}
-              onChange={() => setSelectedToken(token)}
-              id={token.id}
-              key={`tokeninp${index}`}
-            />
-            <label htmlFor={token.id} key={`tokenlab${index}`}>
-              {token.tokenPower}
-            </label>
-          </React.Fragment>
-        );
-      })}
+      {props.tokens
+        .filter((t) => t.tokenPower > 0)
+        .map((token, index) => {
+          return (
+            <React.Fragment key={`token${index}`}>
+              <input
+                type="radio"
+                name="tokens"
+                value={token.tokenPower}
+                checked={selectedToken.id === token.id}
+                onChange={() => setSelectedToken(token)}
+                id={token.id}
+                key={`tokeninp${index}`}
+              />
+              <label htmlFor={token.id} key={`tokenlab${index}`}>
+                {token.tokenPower}
+              </label>
+            </React.Fragment>
+          );
+        })}
       {zeroTokens && (
         <React.Fragment>
           <span>
-            you don't have any tokens so you can't create any rules :(
+            you don't have any valuable tokens so you can't create any rules :(
           </span>
           <br />
         </React.Fragment>
