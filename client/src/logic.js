@@ -61,6 +61,7 @@ import assert from "./assert.js";
 //      readyToRestart = true/false
 //      didDrawTokens = true/false
 //      drawnTokens = []
+//      compilingRule = true/false
 //
 // abort:
 //      (no data)
@@ -202,6 +203,7 @@ function resetPhase(game, phase, args) {
     data.readyToRestart = false;
     data.didDrawTokens = false;
     data.drawnTokens = [];
+    data.compilingRule = false;
   }
   game.data[phase] = data;
 }
@@ -724,6 +726,10 @@ export async function submitRule(game, rule, name, selectedToken) {
   console.log("creating a rule:");
   console.log(rule);
 
+  data.compilingRule = true;
+
+  update(game);
+
   // create a rule
   const compiledRule = await rules.createPrivateRule(name, rule, game.userId);
   game.myRules.push(compiledRule);
@@ -876,4 +882,10 @@ export function myAvailableTokens(game) {
       (tok) => tok.state === tokens.TOKEN_STATE.HAND
     ),
   ];
+}
+
+export function canSubmitRule(game) {
+  if (game.phase !== PHASE.GAMEOVER) return false;
+  const data = game.data[PHASE.GAMEOVER];
+  return !data.sentFinalize && !data.compilingRule;
 }

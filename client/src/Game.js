@@ -235,6 +235,9 @@ function GameOver(props) {
   const [myAvailableTokens, setMyAvailableTokens] = useState(
     logic.myAvailableTokens(props.gameRef.current)
   );
+  const [canSubmit, setCanSubmit] = useState(
+    logic.canSubmitRule(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setWinner(logic.getWinner(props.gameRef.current));
@@ -243,6 +246,7 @@ function GameOver(props) {
     setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
     setNtokens(logic.myAwardedTokens(props.gameRef.current));
     setMyAvailableTokens(logic.myAvailableTokens(props.gameRef.current));
+    setCanSubmit(logic.canSubmitRule(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -255,11 +259,6 @@ function GameOver(props) {
   return (
     <div>
       <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
-      {readyToRestart && (
-        <button onClick={() => logic.restartGame(props.gameRef.current)}>
-          Play again!
-        </button>
-      )}
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
       {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
@@ -269,7 +268,16 @@ function GameOver(props) {
       >
         Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
       </button>
-      <CreateRule tokens={myAvailableTokens} gameRef={props.gameRef} />
+      <CreateRule
+        tokens={myAvailableTokens}
+        gameRef={props.gameRef}
+        canSubmit={canSubmit}
+      />
+      {readyToRestart && (
+        <button onClick={() => logic.restartGame(props.gameRef.current)}>
+          Play again!
+        </button>
+      )}
     </div>
   );
 }
@@ -318,6 +326,7 @@ function CreateRule(props) {
         onClick={() =>
           logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
         }
+        disabled={!props.canSubmit}
       >
         Create rule!
       </button>
