@@ -110,7 +110,7 @@ function Play(props) {
 function SelectRule(props) {
   return (
     <div style={{ marginTop: "5px", marginBottom: "7px" }}>
-      rules:
+      rules:{props.rules.length === 0 ? " (none)" : ""}
       <div className="SelectRule">
         {props.rules.map((rule, index) => {
           return (
@@ -153,7 +153,7 @@ function PlayButton(props) {
 
 function PlayedCards(props) {
   return (
-    <div>
+    <div style={{ margin: "5px" }}>
       played cards: <Deck cards={props.cards} />
     </div>
   );
