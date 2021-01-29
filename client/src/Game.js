@@ -95,10 +95,12 @@ function Play(props) {
             selectedRules
           );
           setSelectedRules([]);
+          setSelectedCard(null);
         }}
         pass={() => {
           logic.playCard(props.gameRef.current, cards.VOID_CARD, selectedRules);
           setSelectedRules([]);
+          setSelectedCard(null);
         }}
       />
     </div>
