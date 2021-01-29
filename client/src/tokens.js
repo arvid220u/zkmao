@@ -120,7 +120,14 @@ export function awardFunction(numCards) {
   return 0;
 }
 
-// this function takes a tokenState (see def top of this file)
+// input:
+//      -tokenState (see def top of this file)
+//      -salt1 (the salt used with the previous state commit)
+//      -salt2 (the salt used this state commit)
+//      -seed (the seed)
+//      -opponentRandomness (the opponentRandomness)
+//      -nonce (the number of the turn)
+//      -userId (the Id of the owner of the card)
 // and it draws 1 card from the personal deck
 // precondition is that there is at least 1 card in the personal deck
 // it returns:
@@ -136,56 +143,37 @@ export async function draw(
   nonce,
   userId
 ) {
-  let oldCardState = tokenListToNum(tokenState.myTokens);
-  let hash1 = mimcHash(seed, opponentRandomness, nonce) % 32;
-  let oldNumCardsInDeck = tokenState.tokenStats[userId]["stock"];
-  let cardToPick = hash1 % oldNumCardsInDeck;
-  let idToState = {};
-  for (var token of tokenState.myTokens) {
-    idToState[token.id] = token.state;
-  }
-  let answer = null;
-  let counter = 0;
-  for (var i = 0; i < tokenState.myTokens.length; i++) {
-    if (idToState[i] === TOKEN_STATE.STOCK) {
-      counter++;
-    }
-    if (counter - cardToPick === 1) {
-      answer = i;
-      break;
-    }
-  }
-  let newCardState = oldCardState + 3 ** answer;
-  let newNumCardsInDeck = oldNumCardsInDeck + 1;
-  let oldCommit = mimcHash(oldCardState, oldNumCardsInDeck, salt1);
-  let newCommit = mimcHash(newCardState, newNumCardsInDeck, salt2);
-  let seedCommit = mimcHash(seed);
-
-  let drawInput = {
-    oldCardstate: `${oldCardState}`,
-    oldNumCardsInDeck: `${oldNumCardsInDeck}`,
-    newCardstate: `${newCardState}`,
-    newNumCardsInDeck: `${newNumCardsInDeck}`,
+  let publicInput = {
+    oldCardstate: `${tokenListToNum(tokenState.myTokens)}`,
+    oldNumCardsInDeck: `${tokenState.tokenStats[userId][TOKEN_STATE.STOCK]}`,
     seed: `${seed}`,
-    salt1: `${salt1}`,
-    salt2: `${salt2}`,
-    opponentRandomness: `${opponentRandomness}`,
     nonce: `${nonce}`,
+    opponentRandomness: `${opponentRandomness}`,
   };
-  console.log("expected public signal");
-  console.log([seedCommit, oldCommit, newCommit, opponentRandomness, nonce]);
-  console.log(
-    await snarks.prove("drawcardsprivately", drawInput)["publicSignal"]
-  );
+
+  let publicOutput = await snarks.prove(publicInput, "drawcardspublicly");
+  publicOutput = publicOutput.publicSignals;
+  let newCardState = publicOutput[0];
+  let newNumCardsInDeck = publicOutput[1];
+
+  let privateInput = Object.create(publicInput);
+  privateInput["newCardstate"] = `${newCardState}`;
+  privateInput["newNumCardsInDeck"] = `${newNumCardsInDeck}`;
+  privateInput["salt1"] = `${salt1}`;
+  privateInput["salt2"] = `${salt2}`;
+
+  let privateOutput = await snarks.prove(privateInput, "drawcardsprivately");
+  let newTokenHash = privateOutput["publicSignals"][2];
+
+  //TODO update the tokenHash stuff
 
   return {
-    newTokenHash: "lol",
-    proof: "this is supposed to be a snark proof lol",
+    newTokenHash: `${newTokenHash}`,
+    proof: privateOutput,
   };
 }
 
 export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
-export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 
 // input:
 //      - tokenState (see top of this file)
@@ -201,23 +189,73 @@ export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 //      - update tokenState.tokenHashes to reflect the new hash
 //      - update tokenState.tokenStats to reflect the newly drawn token
 export async function verifyDrawnToken(tokenState, drawnToken, user) {
-  return true;
+  //TODO assign the variables below
+  let opponentRandomness = null;
+  let nonce = null;
+  let previousHash = null;
+  let previousSeedCommit = null;
+  let proof = null; // a value in the object returned by the proof function
+  let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK]; //TODO check whether I get an updated state or the same old state
+  let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK] - 1;
+
+  //check that stuff make sense
+  if (
+    proof["publicSignals"][1] !== previousHash ||
+    previousSeedCommit !== proof["publicSignals"][0]
+  ) {
+    return INCORRECTLY_DRAWN_TOKEN;
+  }
+
+  //check that public paramaters are good
+  if (
+    oldNumCardsInDeck !== proof["publicSignals"][3] ||
+    newNumCardsInDeck !== proof["publicSignals"][4] ||
+    opponentRandomness !== proof["publicSignals"][5] ||
+    nonce !== proof["publicSignals"][6]
+  ) {
+    return INCORRECTLY_DRAWN_TOKEN;
+  }
+  //check the proof
+  let verification = await snarks.verify(
+    "drawcardsprivately",
+    proof["publicSignals"],
+    proof["proof"]
+  );
+
+  //TODO figure side effects out
+  let newHash = proof["publicSignals"][2]; //TODO store this somewhere
+
+  return verification ? true : INCORRECTLY_DRAWN_TOKEN;
 }
 
 // input:
 //      - tokenState (see top of file)
 //      - token (the token you want to play)
+//      -salt1 (the salt used with the previous state commit)
+//      -salt2 (the salt used this state commit)
+//      -userId (the Id of the owner of the card)
 // output:
 //     {newTokenHash: , proof: }
 // side effects:
 //    - update tokenState.myTokens to reflect the newly played token
-export async function play(tokenState, token) {
+export async function play(tokenState, token, salt1, salt2, userID) {
+  let input = {
+    cardNumber: `${token.id}`,
+    oldCardstate: `${tokenListToNum(tokenState.myTokens)}`,
+    newCardstate: `${tokenListToNum(tokenState.myTokens) + 3 ** token.id}`,
+    oldNumCardsInDeck: `${tokenState.tokenStats[userID][TOKEN_STATE.STOCK]}`,
+    newNumCardsInDeck: `${tokenState.tokenStats[userID][TOKEN_STATE.STOCK]}`,
+    salt1: `${salt1}`,
+    salt2: `${salt2}`,
+  };
+  let proof = await snarks(input, "playCard");
   return {
-    newTokenHash: "lol",
-    proof: "this is supposed to be a snark proof lol",
+    newTokenHash: proof["publicSignals"][1],
+    proof: proof,
   };
 }
 
+export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 // input:
 //      - tokenState (see top of this file)
 //      - playedToken (output of play)
@@ -238,5 +276,33 @@ export async function verifyPlayedToken(
   tokenID,
   user
 ) {
-  return true;
+  //TODO assign the variables below
+  let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
+  let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
+  let previousHash = null;
+  let proof = null; // a value in the object returned by the proof function
+
+  //check that stuff make sense
+  if (proof["publicSignals"][0] !== previousHash) {
+    return INCORRECTLY_PLAYED_TOKEN;
+  }
+
+  //check that public paramaters are good
+  if (
+    oldNumCardsInDeck !== proof["publicSignals"][2] ||
+    newNumCardsInDeck !== proof["publicSignals"][3]
+  ) {
+    return INCORRECTLY_PLAYED_TOKEN;
+  }
+  //check the proof
+  let verification = await snarks.verify(
+    "playCard",
+    proof["publicSignals"],
+    proof["proof"]
+  );
+
+  //TODO figure side effects out
+  let newHash = proof["publicSignals"][1]; //TODO store this somewhere
+
+  return verification ? true : INCORRECTLY_PLAYED_TOKEN;
 }
