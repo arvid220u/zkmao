@@ -1,9 +1,9 @@
 import "./Game.css";
 import React from "react";
 import { useCallback, useRef, useEffect, useState } from "react";
-import * as p2p from "./p2p.js";
 import * as logic from "./logic.js";
 import * as cards from "./cards.js";
+import * as utils from "./utils.js";
 import * as rules from "./rules.js";
 import * as tokens from "./tokens.js";
 
@@ -52,7 +52,7 @@ function Play(props) {
 
   const updateGameState = useCallback(() => {
     console.log("updating game state in Play :))))))");
-    console.log(JSON.parse(JSON.stringify(props.gameRef.current)));
+    console.log(utils.objectify(props.gameRef.current));
     setPlayedCards(logic.getPlayedCards(props.gameRef.current));
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));

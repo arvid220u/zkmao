@@ -136,29 +136,25 @@ export function createGame(conn) {
   console.log(game);
   return game;
 }
-function setUpPublicRules(game) {
-  // TODO: add more public rules
-  rules
-    .createPrivateRule("spades", "card.suit == spades", rules.EVERYONE)
-    .then((rule) => {
-      game.myRules.push(rule);
-      const publicRule = rules.publicRule(rule);
-      game.allRules.push(publicRule);
-      update(game);
-    })
-    .then(() => {
-      return rules.createPrivateRule(
-        "lastcard",
-        "isLastCard()",
-        rules.EVERYONE
-      );
-    })
-    .then((rule) => {
-      game.myRules.push(rule);
-      const publicRule = rules.publicRule(rule);
-      game.allRules.push(publicRule);
-      update(game);
-    });
+async function setUpPublicRules(game) {
+  let cleanSlate = {
+    spades: "return card1 < 13;",
+    lastcard: "return lastCard;",
+    "have a nice day": "return card1 % 13 === 6;",
+    "thank you": "return card2 % 13 === 6;",
+    "I salute the chair": "return (card1 % 13) > 9",
+  };
+  for (const ruleName in cleanSlate) {
+    let rule = await rules.createPrivateRule(
+      ruleName,
+      cleanSlate[ruleName],
+      rules.EVERYONE
+    );
+    game.myRules.push(rule);
+    const publicRule = rules.publicRule(rule);
+    game.allRules.push(publicRule);
+    update(game);
+  }
 }
 function resetPhase(game, phase, args) {
   assert(PHASES.includes(phase), game);
@@ -318,7 +314,7 @@ async function handleStartMethod(game, m) {
 
   update(game);
 }
-function handlePlayMethod(game, m) {
+async function handlePlayMethod(game, m) {
   if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
   const data = game.data[game.phase];
   if (data.state !== PLAY_STATE.WAIT_FOR_PLAY)
@@ -359,9 +355,10 @@ function handlePlayMethod(game, m) {
   ) {
     return abort(game, "did not prove outcomes for all rules user knows of");
   }
-  const penalties = rules.verifyPenalties(
+  const penalties = await rules.verifyPenalties(
     card,
     data.playedCards,
+    data.playerHands[user].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     provedRules
   );
@@ -377,7 +374,7 @@ function handlePlayMethod(game, m) {
 
   update(game);
 }
-function handlePlayAckMethod(game, m) {
+async function handlePlayAckMethod(game, m) {
   if (game.phase !== PHASE.PLAY) return abort(game, "wrong phase");
   const data = game.data[game.phase];
   if (data.state !== PLAY_STATE.WAIT_FOR_PLAYACK)
@@ -413,9 +410,10 @@ function handlePlayAckMethod(game, m) {
     return abort(game, "did not prove outcomes for all rules user knows of");
   }
 
-  const penalties = rules.verifyPenalties(
+  const penalties = await rules.verifyPenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     data.lastSelectedRules,
     provedRules
   );
@@ -451,7 +449,7 @@ function enforcePenalties(game, user, penalties) {
     data.playedCards.splice(0, 1);
   }
   console.log("right before updating the game:");
-  console.log(JSON.parse(JSON.stringify(game)));
+  console.log(utils.objectify(game));
   update(game);
 }
 function handleFinalizeMethod(game, m) {
@@ -502,7 +500,7 @@ function legalToPlayCard(game, card) {
   return lastCard.suit === card.suit || lastCard.rank === card.rank;
 }
 
-export function playCard(game, card, selectedRules) {
+export async function playCard(game, card, selectedRules) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAY, game);
@@ -525,15 +523,17 @@ export function playCard(game, card, selectedRules) {
 
   // we do this for ourselves. we need to run the snarks
   // to prove to others that we enforce our own rules correctly even on ourselves
-  const provedRules = rules.determinePenalties(
+  const provedRules = await rules.determinePenalties(
     card,
-    data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playedCards,
+    data.playerHands[game.userId].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     game.myRules
   );
-  const penalties = rules.verifyPenalties(
+  const penalties = await rules.verifyPenalties(
     card,
-    data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playedCards,
+    data.playerHands[game.userId].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     provedRules
   );
@@ -611,20 +611,22 @@ function maybeStopWaitingForAcks(game) {
   }
 }
 
-function sendPlayAck(game, user, card, selectedRules) {
+async function sendPlayAck(game, user, card, selectedRules) {
   assert(game.phase === PHASE.PLAY, game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAYACK, game);
 
-  const provedRules = rules.determinePenalties(
+  const provedRules = await rules.determinePenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     selectedRules,
     game.myRules
   );
-  const penalties = rules.verifyPenalties(
+  const penalties = await rules.verifyPenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     selectedRules,
     provedRules
   );
