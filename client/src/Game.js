@@ -277,9 +277,12 @@ function GameOver(props) {
 function CreateRule(props) {
   const [rule, setRule] = useState("");
   const [selectedToken, setSelectedToken] = useState(null);
+  const [ruleName, setRuleName] = useState("");
 
   return (
     <div>
+      create a rule:
+      <br />
       {props.tokens.map((token, index) => {
         return (
           <React.Fragment key={`token${index}`}>
@@ -298,10 +301,22 @@ function CreateRule(props) {
           </React.Fragment>
         );
       })}
-      <textarea value={rule} onChange={(e) => setRule(e.target.value)} />
+      <input
+        type="text"
+        value={ruleName}
+        onChange={(e) => setRuleName(e.target.value)}
+        placeholder="(rule name)"
+      />
+      <br />
+      <textarea
+        value={rule}
+        onChange={(e) => setRule(e.target.value)}
+        placeholder="(rule code)"
+      />
+      <br />
       <button
         onClick={() =>
-          logic.submitRule(props.gameRef.current, rule, selectedToken)
+          logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
         }
       >
         Create rule!
