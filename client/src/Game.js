@@ -346,6 +346,12 @@ function CreateRule(props) {
         disabled={!props.canSubmit || zeroTokens}
       />
       <br />
+      <span style={{ fontSize: "0.8em", color: "rgba(0,0,0,0.5)" }}>
+        {
+          "function rule(card1: number, card2: number, lastCard: boolean) -> boolean:"
+        }
+      </span>
+      <br />
       <textarea
         value={rule}
         onChange={(e) => setRule(e.target.value)}

@@ -26,14 +26,14 @@ export async function compileUserRule(rule) {
   let compiledRule = new Array(ruleLength).fill(BigInt(0));
   for (var card2 = 0; card2 < 53; card2++) {
     for (var card1 = 0; card1 < 53; card1++) {
-      for (var lastCard = 0; lastCard < 2; lastCard++) {
+      for (var lastcard = 0; lastcard < 2; lastcard++) {
         let val = await evaluateFuncRule(
           funcRule,
-          lastCard === 1,
+          lastcard === 1,
           card1,
           card2
         );
-        let bitNum = await computeBitNumber(lastCard === 1, card1, card2);
+        let bitNum = await computeBitNumber(lastcard === 1, card1, card2);
         if (val) {
           await populateBit(compiledRule, bitNum);
         }
@@ -50,13 +50,13 @@ export async function compileUserRule(rule) {
 }
 
 async function constructFunction(rule) {
-  let prefix = "async function f(lastCard, card1, card2){\n";
+  let prefix = "async function f(lastcard, card1, card2){\n";
   let suffix = "\n}";
   return prefix.concat(rule).concat(suffix);
 }
 
-async function evaluateFuncRule(funcRule, lastCard, card1, card2) {
-  let code = funcRule + `\nf(${lastCard},${card1},${card2});`;
+async function evaluateFuncRule(funcRule, lastcard, card1, card2) {
+  let code = funcRule + `\nf(${lastcard},${card1},${card2});`;
   try {
     return eval(code);
   } catch (e) {
@@ -65,8 +65,8 @@ async function evaluateFuncRule(funcRule, lastCard, card1, card2) {
     }
   }
 }
-async function computeBitNumber(lastCard, card1, card2) {
-  return lastCard + 2 * card1 + 2 * 53 * card2;
+async function computeBitNumber(lastcard, card1, card2) {
+  return lastcard + 2 * card1 + 2 * 53 * card2;
 }
 async function populateBit(compiledRule, bitNum) {
   let bitInIndex = bitNum % 200;
