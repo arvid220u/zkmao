@@ -81,6 +81,7 @@ function Welcome(props) {
       <br />
       <Join1 connRef={props.connRef} setMyAnswer={props.setMyAnswer} />
       <br />
+      <a href="https://github.com/arvid220u/zkcards">github</a>
     </div>
   );
 }
