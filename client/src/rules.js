@@ -79,7 +79,9 @@ export async function determinePenalties(
   }
   let answer = [];
   for (let [index, rule] of myRules.entries()) {
-    let status = `verifying ${rule.name}; rule ${index} of ${myRules.length}.`;
+    let status = `verifying ${rule.name}; rule ${index + 1} of ${
+      myRules.length
+    }.`;
     reportStatus(status);
     let snarkInput = await computeSnarkProveInput(
       card,
@@ -94,6 +96,7 @@ export async function determinePenalties(
     response["penalty"] = response["proof"]["publicSignals"][0] === "0";
     answer.push(response);
   }
+  reportStatus(null);
   return answer;
 }
 async function computeSnarkProveInput(
