@@ -229,12 +229,16 @@ function GameOver(props) {
   const [readyToDrawTokens, setReadyToDrawTokens] = useState(
     logic.isReadyToDrawTokens(props.gameRef.current)
   );
+  const [nTokens, setNtokens] = useState(
+    logic.myNumTokens(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setWinner(logic.getWinner(props.gameRef.current));
     setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
     setEndedWithCards(logic.getMyHand(props.gameRef.current).length);
     setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
+    setNtokens(logic.myNumTokens(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -243,8 +247,6 @@ function GameOver(props) {
       logic.removeListener(props.gameRef.current, indx);
     };
   }, [props.gameRef, updateGameState]);
-
-  const nTokens = tokens.awardFunction(endedWithCards);
 
   return (
     <div>

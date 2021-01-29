@@ -644,17 +644,33 @@ function sendPlayAck(game, user, card, selectedRules) {
   update(game);
 }
 
-export function drawTokens(game) {
+export async function drawTokens(game) {
   assert(game.phase === PHASE.GAMEOVER, "pls be in gameover state sir");
   const data = game.data[game.phase];
   assert(!data.didDrawTokens, "cannot draw tokens twice!!!!!");
 
   data.didDrawTokens = true;
 
-  console.log("drawing tokens!");
-  utils.unimplemented();
-
   update(game);
+
+  const numtokens = myNumTokens(game);
+
+  console.log(`drawing ${numtokens} tokens!`);
+
+  for (let i = 0; i < numtokens; i++) {
+    const drawnToken = await tokens.draw(game.tokenState);
+    data.drawnTokens.push(drawnToken);
+    const verification = await tokens.verifyDrawnToken(
+      game.tokenState,
+      drawnToken,
+      game.userId
+    );
+    assert(
+      verification !== tokens.INCORRECTLY_DRAWN_TOKEN,
+      "verification is wrong"
+    );
+    update(game);
+  }
 }
 
 function maybeStartGame(game) {
@@ -782,4 +798,16 @@ export function isReadyToDrawTokens(game) {
   const data = game.data[PHASE.GAMEOVER];
   if (game.phase !== PHASE.GAMEOVER) return false;
   return !data.didDrawTokens;
+}
+
+export function myNumTokens(game) {
+  assert(
+    game.phase === PHASE.GAMEOVER,
+    "u need to be in gameover to get tokens"
+  );
+  const desiredamt = tokens.awardFunction(getMyHand(game).length);
+  const numtokensleft = game.tokenState.myTokens.filter(
+    (tok) => tok.state === tokens.TOKEN_STATE.STOCK
+  ).length;
+  return Math.min(desiredamt, numtokensleft);
 }

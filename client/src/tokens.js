@@ -3,7 +3,8 @@ import assert from "./assert.js";
 // we store a tokenState object.
 // a tokenState object has the following:
 //      1. tokenHashes: {userId -> tokenHash}
-//      2. myTokens:
+//      2. myTokens: list of token objects
+//      3. tokenStats {userId -> {stock: n, hand: n, discarded: n}}
 //
 // a token is represented by: {tokenPower: n, state: }. tokenPower = # cards for penalty
 
@@ -110,4 +111,37 @@ export function awardFunction(numCards) {
     return 1;
   }
   return 0;
+}
+
+// this function takes a tokenState (see def top of this file)
+// and it draws 1 card from the personal deck
+// precondition is that there is at least 1 card in the personal deck
+// it returns:
+//  - {newTokenHash: , proof: }
+// side effects:
+//  - update tokenState.myTokens to reflect the newly drawn token
+export async function draw(tokenState) {
+  return {
+    newTokenHash: "lol",
+    proof: "this is supposed to be a snark proof lol",
+  };
+}
+
+export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
+
+// input:
+//      - tokenState (see top of this file)
+//      - drawnToken (output of draw)
+//      - user (the id of the user who drew the token)
+// output:
+//   if everything correct:
+//      - true
+//   if incorrect proof:
+//      - INCORRECTLY_DRAWN_TOKEN
+// side effects:
+//   if everything correct:
+//      - update tokenState.tokenHashes to reflect the new hash
+//      - update tokenState.tokenStats to reflect the newly drawn token
+export async function verifyDrawnToken(tokenState, drawnToken, user) {
+  return true;
 }
