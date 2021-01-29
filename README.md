@@ -18,6 +18,10 @@ there are two main technologies that enables zkmao to be what it is:
 3. there are secret rules — if you don't follow them, you will be penalized
 4. after each game, players will be rewarded with tokens. you can spend tokens to create your own personal rule, enforcing penalties on others in subsequent games
 
+## caveats
+
+fully peer-to-peer webrtc is unfortunately unreliable in many cases :(
+
 # dev
 
 the folder structure is as follows:
