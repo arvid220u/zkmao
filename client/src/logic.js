@@ -523,7 +523,8 @@ export function playCard(game, card, selectedRules) {
   // to prove to others that we enforce our own rules correctly even on ourselves
   const provedRules = rules.determinePenalties(
     card,
-    data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playedCards,
+    data.playerHands[game.userId].filter((c) => !cards.sameCard(c, card)),
     selectedRules,
     game.myRules
   );
@@ -616,6 +617,7 @@ function sendPlayAck(game, user, card, selectedRules) {
   const provedRules = rules.determinePenalties(
     card,
     data.playedCards.slice(0, data.playedCards.length - 1),
+    data.playerHands[user],
     selectedRules,
     game.myRules
   );
