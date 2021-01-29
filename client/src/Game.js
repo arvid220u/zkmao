@@ -258,7 +258,7 @@ function GameOver(props) {
 
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>Game over!! {winner} won!</div>
+      <div style={{ fontSize: "2em" }}>game over!! {winner} won!</div>
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
       {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
@@ -276,7 +276,7 @@ function GameOver(props) {
       />
       {readyToRestart && (
         <button onClick={() => logic.restartGame(props.gameRef.current)}>
-          Play again!
+          play again!
         </button>
       )}
     </div>
@@ -361,7 +361,7 @@ function CreateRule(props) {
         }}
         disabled={!props.canSubmit || zeroTokens}
       >
-        Create rule!
+        create rule!
       </button>
       <button
         onClick={() =>
@@ -369,7 +369,7 @@ function CreateRule(props) {
         }
         disabled={!props.canSubmit}
       >
-        Skip creating a rule
+        skip creating a rule
       </button>
     </div>
   );

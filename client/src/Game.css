@@ -9,7 +9,7 @@
   margin: 0;
 }
 .SelectableDeck input:checked + label {
-  background: rgba(0, 0, 255, 0.2);
+  background: rgba(49, 245, 0, 0.692);
 }
 
 .SelectRule input {
@@ -23,5 +23,5 @@
   margin: 0;
 }
 .SelectRule input:checked + label {
-  background: rgba(0, 0, 255, 0.2);
+  background: rgba(49, 245, 0, 0.692);
 }
