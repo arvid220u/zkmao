@@ -258,10 +258,11 @@ function GameOver(props) {
 
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
+      <div style={{ fontSize: "2em" }}>Game over!! {winner} won!</div>
       because you ended with {endedWithCards} card
       {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
       {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
+      <br />
       <button
         onClick={() => logic.drawTokens(props.gameRef.current)}
         disabled={!readyToDrawTokens}
@@ -377,12 +378,15 @@ function CreateRule(props) {
 function Rules(props) {
   return (
     <div>
-      Rules:
-      <ul>
-        {props.rules.map((rule) => {
-          return <li key={rule.hash}>{JSON.stringify(rule)}</li>;
-        })}
-      </ul>
+      rules:{" "}
+      {props.rules.length > 0 && (
+        <ul>
+          {props.rules.map((rule) => {
+            return <li key={rule.hash}>{JSON.stringify(rule)}</li>;
+          })}
+        </ul>
+      )}
+      {props.rules.length === 0 && <span>(none)</span>}
     </div>
   );
 }

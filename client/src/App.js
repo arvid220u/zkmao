@@ -154,6 +154,7 @@ function App() {
 
   return (
     <div className="App">
+      <h1>zkmao</h1>
       {inSetup && <Setup connRef={connRef} startGame={startGame} />}
       {!inSetup && <Game connRef={connRef} gameRef={gameRef} />}
     </div>
