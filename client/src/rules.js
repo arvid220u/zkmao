@@ -178,7 +178,6 @@ async function verifyPublicSignals(
       ? "52"
       : `${computeCardIndex(playedCards[playedCards.length - 1])}`;
   let lastCard = hand.length === 1;
-  console.log("shit wave");
   console.log(publicSignals[1] === ruleHash);
   console.log(publicSignals[2] === (lastCard ? "1" : "0"));
   console.log(publicSignals[3] === card1);

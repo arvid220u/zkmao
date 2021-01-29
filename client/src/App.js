@@ -24,7 +24,7 @@ function Create2(props) {
 
   const onAddPlayer = useCallback(() => {
     p2p.acceptAnswer(props.connRef.current, joinKey);
-  }, [joinKey]);
+  }, [props.connRef, joinKey]);
 
   return (
     <div>
@@ -47,7 +47,7 @@ function Join1(props) {
 
   const onJoin = useCallback(() => {
     p2p.join(props.connRef.current, joinKey, props.setMyAnswer);
-  }, [joinKey]);
+  }, [props.connRef, props.setMyAnswer, joinKey]);
 
   return (
     <div>

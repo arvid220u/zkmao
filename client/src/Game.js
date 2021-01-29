@@ -5,6 +5,7 @@ import * as logic from "./logic.js";
 import * as cards from "./cards.js";
 import * as utils from "./utils.js";
 import * as rules from "./rules.js";
+import * as tokens from "./tokens.js";
 
 import { Chat } from "./Chat.js";
 
@@ -94,10 +95,12 @@ function Play(props) {
             selectedRules
           );
           setSelectedRules([]);
+          setSelectedCard(null);
         }}
         pass={() => {
           logic.playCard(props.gameRef.current, cards.VOID_CARD, selectedRules);
           setSelectedRules([]);
+          setSelectedCard(null);
         }}
       />
     </div>
@@ -216,13 +219,138 @@ function SelectableDeck(props) {
 }
 
 function GameOver(props) {
+  const [winner, setWinner] = useState(logic.getWinner(props.gameRef.current));
+  const [readyToRestart, setReadyToRestart] = useState(
+    logic.isReadyToRestart(props.gameRef.current)
+  );
+  const [endedWithCards, setEndedWithCards] = useState(
+    logic.getMyHand(props.gameRef.current).length
+  );
+  const [readyToDrawTokens, setReadyToDrawTokens] = useState(
+    logic.isReadyToDrawTokens(props.gameRef.current)
+  );
+  const [nTokens, setNtokens] = useState(
+    logic.myAwardedTokens(props.gameRef.current)
+  );
+  const [myAvailableTokens, setMyAvailableTokens] = useState(
+    logic.myAvailableTokens(props.gameRef.current)
+  );
+  const [canSubmit, setCanSubmit] = useState(
+    logic.canSubmitRule(props.gameRef.current)
+  );
+
+  const updateGameState = useCallback(() => {
+    setWinner(logic.getWinner(props.gameRef.current));
+    setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
+    setEndedWithCards(logic.getMyHand(props.gameRef.current).length);
+    setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
+    setNtokens(logic.myAwardedTokens(props.gameRef.current));
+    setMyAvailableTokens(logic.myAvailableTokens(props.gameRef.current));
+    setCanSubmit(logic.canSubmitRule(props.gameRef.current));
+  }, [props.gameRef]);
+
+  useEffect(() => {
+    const indx = logic.addListener(props.gameRef.current, updateGameState);
+    return () => {
+      logic.removeListener(props.gameRef.current, indx);
+    };
+  }, [props.gameRef, updateGameState]);
+
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>
-        Game is over!!!! {props.winner} won!
-      </div>
-      <button onClick={() => logic.restartGame(props.gameRef.current)}>
-        Play again!
+      <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
+      because you ended with {endedWithCards} card
+      {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
+      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
+      <button
+        onClick={() => logic.drawTokens(props.gameRef.current)}
+        disabled={!readyToDrawTokens}
+      >
+        Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+      </button>
+      <CreateRule
+        tokens={myAvailableTokens}
+        gameRef={props.gameRef}
+        canSubmit={canSubmit}
+      />
+      {readyToRestart && (
+        <button onClick={() => logic.restartGame(props.gameRef.current)}>
+          Play again!
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CreateRule(props) {
+  const [rule, setRule] = useState("");
+  const [selectedToken, setSelectedToken] = useState(null);
+  const [ruleName, setRuleName] = useState("");
+
+  const zeroTokens = props.tokens.filter((t) => t.tokenPower > 0).length === 0;
+
+  return (
+    <div>
+      create a rule:
+      <br />
+      {props.tokens
+        .filter((t) => t.tokenPower > 0)
+        .map((token, index) => {
+          return (
+            <React.Fragment key={`token${index}`}>
+              <input
+                type="radio"
+                name="tokens"
+                value={token.tokenPower}
+                checked={selectedToken.id === token.id}
+                onChange={() => setSelectedToken(token)}
+                id={token.id}
+                key={`tokeninp${index}`}
+              />
+              <label htmlFor={token.id} key={`tokenlab${index}`}>
+                {token.tokenPower}
+              </label>
+            </React.Fragment>
+          );
+        })}
+      {zeroTokens && (
+        <React.Fragment>
+          <span>
+            you don't have any valuable tokens so you can't create any rules :(
+          </span>
+          <br />
+        </React.Fragment>
+      )}
+      <input
+        type="text"
+        value={ruleName}
+        onChange={(e) => setRuleName(e.target.value)}
+        placeholder="(rule name)"
+        disabled={!props.canSubmit || zeroTokens}
+      />
+      <br />
+      <textarea
+        value={rule}
+        onChange={(e) => setRule(e.target.value)}
+        placeholder="(rule code)"
+        disabled={!props.canSubmit || zeroTokens}
+      />
+      <br />
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
+        }
+        disabled={!props.canSubmit || zeroTokens}
+      >
+        Create rule!
+      </button>
+      <button
+        onClick={() =>
+          logic.submitRule(props.gameRef.current, null, null, null)
+        }
+        disabled={!props.canSubmit}
+      >
+        Skip creating a rule
       </button>
     </div>
   );
@@ -241,17 +369,38 @@ function Rules(props) {
   );
 }
 
+function Tokens(props) {
+  const tokenStock = props.tokens.filter(
+    (token) => token.state === tokens.TOKEN_STATE.STOCK
+  );
+  const myTokens = props.tokens.filter(
+    (token) => token.state === tokens.TOKEN_STATE.HAND
+  );
+
+  return (
+    <div>
+      my tokens:{" "}
+      {myTokens.length === 0 ? "none" : tokens.serializeTokens(myTokens)}{" "}
+      (available tokens: {tokens.serializeTokens(tokenStock)})
+    </div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
     logic.getMyUserId(props.gameRef.current)
   );
   const [rules, setRules] = useState(logic.getRules(props.gameRef.current));
+  const [tokens, setTokens] = useState(
+    logic.getMyTokens(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setPhase(props.gameRef.current.phase);
     setMyUserId(logic.getMyUserId(props.gameRef.current));
     setRules(logic.getRules(props.gameRef.current));
+    setTokens(logic.getMyTokens(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -267,10 +416,7 @@ export function Game(props) {
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
         <React.Fragment>
-          <GameOver
-            gameRef={props.gameRef}
-            winner={logic.getWinner(props.gameRef.current)}
-          />
+          <GameOver gameRef={props.gameRef} />
           <hr />
         </React.Fragment>
       )}
@@ -281,6 +427,7 @@ export function Game(props) {
         </React.Fragment>
       )}
       <Rules rules={rules} />
+      {tokens && <Tokens tokens={tokens} />}
       <hr />
       {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
         <React.Fragment>
