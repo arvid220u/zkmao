@@ -142,7 +142,7 @@ export async function verifyPenalties(
   for (const rule in selectedRules) {
     rulesActedUpon[rule.hash] = rule;
   }
-  answer = [];
+  let answer = [];
   for (const proof in provedRules) {
     if (
       !(await verifyPublicSignals(
