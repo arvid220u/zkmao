@@ -37,9 +37,12 @@ export function Chat(props) {
         value={chatMessage}
         onChange={(e) => setChatMessage(e.target.value)}
         onKeyUp={(e) => (e.key === "Enter" ? onSendMessage() : 0)}
+        placeholder="(say hi)"
       ></input>
-      <button onClick={onSendMessage}>Send message</button>
-      <p style={{ whiteSpace: "pre-line" }}>{messages}</p>
+      <button onClick={onSendMessage}>send message</button>
+      <p style={{ whiteSpace: "pre-line", color: "rgba(0,0,0,0.5)" }}>
+        {messages}
+      </p>
     </div>
   );
 }

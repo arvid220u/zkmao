@@ -35,12 +35,12 @@ const NUM_TOKENS = 10;
 
 export function createTokenState(players) {
   const tokenState = {
-    tokenHash: {},
+    tokenHashes: {},
     myTokens: initialTokens(),
     tokenStats: {},
   };
   for (const user of players) {
-    tokenState.tokenHash[user] = tokenNumToHash(
+    tokenState.tokenHashes[user] = tokenNumToHash(
       tokenListToNum(initialTokens())
     );
     tokenState.tokenStats[user] = {
@@ -104,6 +104,9 @@ function tokenNumToHash(tokenNum) {
   // TODO: hash this in the mimc way lol
   return 0;
 }
+export function tokenIdToPower(tokenId) {
+  return initialTokens().filter((t) => t.id === tokenId)[0].tokenPower;
+}
 
 export function serializeTokens(tokens) {
   return tokens.map((t) => `${t.tokenPower}`).join(",");
@@ -143,6 +146,7 @@ export async function draw(
   nonce,
   userId
 ) {
+
   let publicInput = {
     oldCardstate: `${tokenListToNum(tokenState.myTokens)}`,
     oldNumCardsInDeck: `${tokenState.tokenStats[userId][TOKEN_STATE.STOCK]}`,
@@ -180,7 +184,7 @@ export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
 //      - drawnToken (output of draw)
 //      - user (the id of the user who drew the token)
 // output:
-//   if everything correct:
+//   if everything correct (need to check that tokenState.tokenHashes reflects the old hash value!):
 //      - true
 //   if incorrect proof:
 //      - INCORRECTLY_DRAWN_TOKEN
@@ -262,7 +266,7 @@ export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 //      - tokenID (the id of the token being played)
 //      - user (the id of the user who played the token)
 // output:
-//   if everything correct:
+//   if everything correct (including verifying that tokenID is indeed the input to playedToken!):
 //      - true
 //   if incorrect proof:
 //      - INCORRECTLY_PLAYED_TOKEN

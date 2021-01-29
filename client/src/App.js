@@ -13,7 +13,7 @@ function Create1(props) {
       <button
         onClick={() => p2p.createOffer(props.connRef.current, props.setMyOffer)}
       >
-        Create game
+        create game
       </button>
     </div>
   );
@@ -28,16 +28,17 @@ function Create2(props) {
 
   return (
     <div>
-      send this message to your friends: <code>{props.offer}</code>
-      <br />
-      input their answer:
+      1. send this key to your friend: <code>{props.offer}</code>
+      <hr />
+      2. input their key:{" "}
       <input
         type="text"
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
         onKeyUp={(e) => (e.key === "Enter" ? onAddPlayer() : 0)}
+        placeholder="(paste key here)"
       ></input>
-      <button onClick={onAddPlayer}>Add player</button>
+      <button onClick={onAddPlayer}>connect</button>
     </div>
   );
 }
@@ -56,8 +57,9 @@ function Join1(props) {
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
         onKeyUp={(e) => (e.key === "Enter" ? onJoin() : 0)}
+        placeholder="(paste key here)"
       ></input>
-      <button onClick={onJoin}>Join</button>
+      <button onClick={onJoin}>join game</button>
     </div>
   );
 }
@@ -65,7 +67,7 @@ function Join1(props) {
 function Join2(props) {
   return (
     <div>
-      send this message to your friends: <code>{props.answer}</code>
+      1. send this key to your friend: <code>{props.answer}</code>
       <br />
     </div>
   );
@@ -84,6 +86,17 @@ function Welcome(props) {
 }
 
 function Lobby(props) {
+  const [numConn, setNumConn] = useState(0);
+
+  useEffect(() => {
+    const indx = p2p.addMessageHandler(props.connRef.current, (m) =>
+      setNumConn(p2p.numConnections(props.connRef.current))
+    );
+    return () => {
+      p2p.removeMessageHandler(props.connRef.current, indx);
+    };
+  }, [props.connRef]);
+
   return (
     <div>
       {props.offer ? (
@@ -92,10 +105,9 @@ function Lobby(props) {
         <Join2 connRef={props.connRef} answer={props.answer} />
       )}
       <hr />
-      Participants list: idk
-      <br />
-      <hr />
-      <button onClick={props.startGame}>Start game!</button>
+      <button onClick={props.startGame} disabled={numConn === 0}>
+        start game!
+      </button>
       <hr />
       <Chat connRef={props.connRef} />
     </div>
@@ -154,6 +166,7 @@ function App() {
 
   return (
     <div className="App">
+      <h1>zkmao</h1>
       {inSetup && <Setup connRef={connRef} startGame={startGame} />}
       {!inSetup && <Game connRef={connRef} gameRef={gameRef} />}
     </div>
