@@ -33,15 +33,15 @@ const NUM_TOKEN_STATES = 3;
 // important!! this needs to be the same as the generated snarks
 const NUM_TOKENS = 10;
 
-export function createTokenState(players) {
+export async function createTokenState(players) {
   const tokenState = {
     tokenHashes: {},
     myTokens: initialTokens(),
     tokenStats: {},
   };
   for (const user of players) {
-    tokenState.tokenHashes[user] = tokenNumToHash(
-      tokenListToNum(initialTokens())
+    tokenState.tokenHashes[user] = await tokenNumToHash(
+      tokenListToNum(initialTokens(), NUM_TOKENS, 0)
     );
     tokenState.tokenStats[user] = {
       [TOKEN_STATE.STOCK]: NUM_TOKENS,
@@ -100,9 +100,9 @@ function tokenBitToState(tokenBit) {
   assert(0 <= tokenBit && tokenBit < NUM_TOKEN_STATES, "uh");
   return TOKEN_STATES[tokenBit];
 }
-function tokenNumToHash(tokenNum) {
+async function tokenNumToHash(tokenNum, numCards, salt) {
   // TODO: hash this in the mimc way lol
-  return 0;
+  return await mimcHash(tokenNum, numCards, salt);
 }
 export function tokenIdToPower(tokenId) {
   return initialTokens().filter((t) => t.id === tokenId)[0].tokenPower;
@@ -169,7 +169,9 @@ export async function draw(
   let newTokenHash = privateOutput["publicSignals"][2];
 
   //TODO update the tokenHash stuff
-  let power = Math.round(Math.log(newCardState - oldCardstate) / Math.log(3));
+  let power = Math.round(
+    Math.log(newCardState - publicInput["oldCardstate"]) / Math.log(3)
+  );
   assert(
     tokenState.myTokens.filter((t) => t.id === power)[0].state ===
       TOKEN_STATE.STOCK,
@@ -197,20 +199,25 @@ export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
 //   if everything correct:
 //      - update tokenState.tokenHashes to reflect the new hash
 //      - update tokenState.tokenStats to reflect the newly drawn token
-export async function verifyDrawnToken(tokenState, drawnToken, user) {
+export async function verifyDrawnToken(
+  tokenState,
+  drawnToken,
+  user,
+  opponentRandomness,
+  nonce,
+  seed
+) {
   //TODO assign the variables below
-  let opponentRandomness = null;
-  let nonce = null;
-  let previousHash = null;
-  let previousSeedCommit = null;
-  let proof = null; // a value in the object returned by the proof function
-  let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK]; //TODO check whether I get an updated state or the same old state
+  let previousHash = tokenState.tokenHashes[user];
+  let seedCommit = mimcHash(seed);
+  let proof = drawnToken["proof"]; // a value in the object returned by the proof function
+  let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
   let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK] - 1;
 
   //check that stuff make sense
   if (
     proof["publicSignals"][1] !== previousHash ||
-    previousSeedCommit !== proof["publicSignals"][0]
+    seedCommit !== proof["publicSignals"][0]
   ) {
     return INCORRECTLY_DRAWN_TOKEN;
   }
@@ -233,6 +240,9 @@ export async function verifyDrawnToken(tokenState, drawnToken, user) {
 
   //TODO figure side effects out
   let newHash = proof["publicSignals"][2]; //TODO store this somewhere
+  tokenState.tokenHashes[user] = newHash;
+  tokenState.tokenStats[user][TOKEN_STATE.STOCK]--;
+  tokenState.tokenStats[user][TOKEN_STATE.HAND]++;
 
   return verification ? true : INCORRECTLY_DRAWN_TOKEN;
 }
@@ -258,6 +268,13 @@ export async function play(tokenState, token, salt1, salt2, userID) {
     salt2: `${salt2}`,
   };
   let proof = await snarks(input, "playCard");
+  assert(
+    tokenState.myTokens.filter((tok) => tok.id === token.id)[0].state ===
+      TOKEN_STATE.HAND,
+    "card should be in hand@@@@@@bbbbbb"
+  );
+  tokenState.myTokens.filter((tok) => tok.id === token.id)[0].state =
+    TOKEN_STATE.DISCARDED;
   return {
     newTokenHash: proof["publicSignals"][1],
     proof: proof,
@@ -288,18 +305,21 @@ export async function verifyPlayedToken(
   //TODO assign the variables below
   let oldNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
   let newNumCardsInDeck = tokenState.tokenStats[user][TOKEN_STATE.STOCK];
-  let previousHash = null;
-  let proof = null; // a value in the object returned by the proof function
+  let previousHash = tokenState.tokenHashes[user];
+  let proof = playedToken["proof"]; // a value in the object returned by the proof function
 
   //check that stuff make sense
-  if (proof["publicSignals"][0] !== previousHash) {
+  if (
+    proof["publicSignals"][0] !== previousHash ||
+    proof["publicSignals"][2] !== tokenID
+  ) {
     return INCORRECTLY_PLAYED_TOKEN;
   }
 
   //check that public paramaters are good
   if (
-    oldNumCardsInDeck !== proof["publicSignals"][2] ||
-    newNumCardsInDeck !== proof["publicSignals"][3]
+    oldNumCardsInDeck !== proof["publicSignals"][3] ||
+    newNumCardsInDeck !== proof["publicSignals"][4]
   ) {
     return INCORRECTLY_PLAYED_TOKEN;
   }
@@ -310,8 +330,10 @@ export async function verifyPlayedToken(
     proof["proof"]
   );
 
-  //TODO figure side effects out
-  let newHash = proof["publicSignals"][1]; //TODO store this somewhere
+  let newHash = proof["publicSignals"][1];
+  tokenState.tokenHashes[user] = newHash;
+  tokenState.tokenStats[user][TOKEN_STATE.HAND]--;
+  tokenState.tokenStats[user][TOKEN_STATE.DISCARDED]++;
 
   return verification ? true : INCORRECTLY_PLAYED_TOKEN;
 }

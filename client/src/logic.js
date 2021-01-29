@@ -493,7 +493,10 @@ async function handleFinalizeMethod(game, m) {
     const verification = await tokens.verifyDrawnToken(
       game.tokenState,
       drawnToken,
-      user
+      user,
+      game.playerRandoms[game.userId],
+      game.numRounds,
+      game.playerRandoms[user]
     );
     if (verification === tokens.INCORRECTLY_DRAWN_TOKEN) {
       return abort(game, "token was not drawn correctly");
@@ -760,7 +763,10 @@ export async function drawTokens(game) {
     const verification = await tokens.verifyDrawnToken(
       game.tokenState,
       drawnToken,
-      game.userId
+      game.userId,
+      game.playerRandoms[getOppUserId(game)],
+      game.numRounds,
+      game.playerRandoms[game.userId]
     );
     assert(
       verification !== tokens.INCORRECTLY_DRAWN_TOKEN,
@@ -800,7 +806,15 @@ export async function submitRule(game, rule, name, selectedToken) {
     );
 
     // play the token
-    const playedToken = await tokens.play(game.tokenState, selectedToken);
+    const newSalt = Math.floor(Math.random() * 2 ** 64);
+    const playedToken = await tokens.play(
+      game.tokenState,
+      selectedToken,
+      game.prevSalt,
+      newSalt,
+      game.userId
+    );
+    game.prevSalt = newSalt;
     const verification = await tokens.verifyPlayedToken(
       game.tokenState,
       playedToken,
@@ -885,7 +899,7 @@ function maybeSendStart(game) {
     sendStart(game);
   }
 }
-function sendStart(game) {
+async function sendStart(game) {
   assert(game.phase === PHASE.SETUP, game);
   const data = game.data[game.phase];
   assert(data.state === SETUP_STATE.SENT_READY, game);
@@ -897,7 +911,7 @@ function sendStart(game) {
 
   // here we want to create a token object if one doesn't already exist
   if (game.tokenState === null) {
-    game.tokenState = tokens.createTokenState(data.players);
+    game.tokenState = await tokens.createTokenState(data.players);
   }
 
   maybeStartGame(game);
