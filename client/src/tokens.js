@@ -128,6 +128,7 @@ export async function draw(tokenState) {
 }
 
 export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
+export const INCORRECTLY_PLAYED_TOKEN = "INCORRECTLY_PLAYED_TOKEN";
 
 // input:
 //      - tokenState (see top of this file)
@@ -143,5 +144,42 @@ export const INCORRECTLY_DRAWN_TOKEN = "INCORRECTLY_DRAWN_TOKEN";
 //      - update tokenState.tokenHashes to reflect the new hash
 //      - update tokenState.tokenStats to reflect the newly drawn token
 export async function verifyDrawnToken(tokenState, drawnToken, user) {
+  return true;
+}
+
+// input:
+//      - tokenState (see top of file)
+//      - token (the token you want to play)
+// output:
+//     {newTokenHash: , proof: }
+// side effects:
+//    - update tokenState.myTokens to reflect the newly played token
+export async function play(tokenState, token) {
+  return {
+    newTokenHash: "lol",
+    proof: "this is supposed to be a snark proof lol",
+  };
+}
+
+// input:
+//      - tokenState (see top of this file)
+//      - playedToken (output of play)
+//      - tokenID (the id of the token being played)
+//      - user (the id of the user who played the token)
+// output:
+//   if everything correct:
+//      - true
+//   if incorrect proof:
+//      - INCORRECTLY_PLAYED_TOKEN
+// side effects:
+//   if everything correct:
+//      - update tokenState.tokenHashes to reflect the new hash
+//      - update tokenState.tokenStats to reflect the newly played token
+export async function verifyPlayedToken(
+  tokenState,
+  playedToken,
+  tokenID,
+  user
+) {
   return true;
 }

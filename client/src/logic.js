@@ -732,17 +732,50 @@ export async function submitRule(game, rule, name, selectedToken) {
 
   update(game);
 
-  let publicRule = null;
+  let rulethings = {};
   if (rule) {
+    // assert that we own the selected token!!!
+    assert(
+      game.tokenState.myTokens.filter(
+        (tok) =>
+          tok.id === selectedToken.id && tok.state === tokens.TOKEN_STATE.HAND
+      ),
+      "we need to own the token to use it"
+    );
+
+    // play the token
+    const playedToken = await tokens.play(game.tokenState, selectedToken);
+    const verification = await tokens.verifyPlayedToken(
+      game.tokenState,
+      playedToken,
+      selectedToken.id,
+      game.userId
+    );
+    assert(
+      verification !== tokens.INCORRECTLY_PLAYED_TOKEN,
+      "token must be drawn correctly"
+    );
+
     // create a rule
     const compiledRule = await rules.createPrivateRule(name, rule, game.userId);
     game.myRules.push(compiledRule);
-    publicRule = rules.publicRule(compiledRule);
+    const publicRule = rules.publicRule(compiledRule);
     game.allRules.push(publicRule);
     update(game);
+
+    rulethings = {
+      rule: publicRule,
+      tokenHash: game.tokenState.tokenHashes[game.userId],
+      tokenID: selectedToken.id,
+      playedToken,
+    };
   }
 
-  send(game, { method: METHOD.FINALIZE, rule: publicRule });
+  send(game, {
+    method: METHOD.FINALIZE,
+    drawnTokens: data.drawnTokens,
+    ...rulethings,
+  });
 
   data.sentFinalize = true;
 
