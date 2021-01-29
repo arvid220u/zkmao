@@ -46,7 +46,7 @@ each circuit is in its own subfolder. there are a ton of scripts at the top leve
 
 the main circuits are:
 1. `drawcardsprivately`: this circuit allows us to simulate our concept of tokens in the game of mao. each player has a personal stock of tokens, of differing values. this circuit allows the player to provably randomly take a token from the stock and move it into their personal hand, for later use.
-2. `playcards`: this circuit allows the player to consume a token, proving to their opponent that the token was previously in their hand.
-3. `maorule`: this circuit allows for players to enforce their personal rules without revealing them.
+2. `playCard`: this circuit allows the player to consume a token, proving to their opponent that the token was previously in their hand.
+3. `maoRule`: this circuit allows for players to enforce their personal rules without revealing them.
 
 the other circuits are used for supporting these main circuits.
