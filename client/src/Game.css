@@ -5,7 +5,7 @@
 .SelectableDeck label {
   cursor: pointer;
   border-radius: 3px;
-  padding: 2px 2px 2px 2px;
+  padding: 0px 2px 2px 2px;
   margin: 0;
 }
 .SelectableDeck input:checked + label {
@@ -19,7 +19,7 @@
 .SelectRule label {
   cursor: pointer;
   border-radius: 3px;
-  padding: 2px 2px 2px 2px;
+  padding: 2px 6px;
   margin: 0;
 }
 .SelectRule input:checked + label {
