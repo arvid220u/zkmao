@@ -54,9 +54,11 @@ import assert from "./assert.js";
 //      lastSelectedRules
 //      penaltyRules
 //
-// gameover: (transitions directly to setup.sentReady)
+// gameover: (transitions directly to setup.sentReady (only if received all finalized))
 //      winner = user_id
-//      state = {"preFinalize", } TODO
+//      sentFinalize = true/false
+//      finalizedReceived = []
+//      readyToRestart = true/false
 //
 // abort:
 //      (no data)
@@ -85,6 +87,7 @@ const METHOD = {
   START: "START",
   PLAY: "PLAY",
   PLAYACK: "PLAYACK",
+  FINALIZE: "FINALIZE",
   ABORT: "ABORT",
 };
 const METHODS = Object.values(METHOD);
@@ -93,6 +96,7 @@ const METHOD_HANDLER = {
   [METHOD.START]: handleStartMethod,
   [METHOD.PLAY]: handlePlayMethod,
   [METHOD.PLAYACK]: handlePlayAckMethod,
+  [METHOD.FINALIZE]: handleFinalizeMethod,
   [METHOD.ABORT]: handleAbortMethod,
 };
 assert(
@@ -192,6 +196,11 @@ function resetPhase(game, phase, args) {
     data.lastPlayedUser = null;
     data.lastSelectedRules = null;
     data.penaltyRules = [];
+  } else if (phase === PHASE.GAMEOVER) {
+    data.winner = args.winner;
+    data.sentFinalize = false;
+    data.finalizedReceived = [];
+    data.readyToRestart = false;
   }
   game.data[phase] = data;
 }
@@ -441,6 +450,11 @@ function enforcePenalties(game, user, penalties) {
   console.log(JSON.parse(JSON.stringify(game)));
   update(game);
 }
+function handleFinalizeMethod(game, m) {
+  console.log("FINALIZE message received");
+  console.log(m);
+  utils.unimplemented();
+}
 function handleAbortMethod(game, m) {
   console.log("ABORTING :(((( SAD");
   utils.unimplemented();
@@ -568,8 +582,7 @@ function checkIfWon(game) {
           1
       );
 
-      game.phase = PHASE.GAMEOVER;
-      game.data[PHASE.GAMEOVER].winner = user;
+      initPhase(game, PHASE.GAMEOVER, { winner: user });
     }
   }
 }
@@ -740,4 +753,10 @@ export function getMyTokens(game) {
     return null;
   }
   return [...game.tokenState.myTokens];
+}
+
+export function isReadyToRestart(game) {
+  const data = game.data[PHASE.GAMEOVER];
+  if (game.phase !== PHASE.GAMEOVER) return false;
+  return data.readyToRestart;
 }

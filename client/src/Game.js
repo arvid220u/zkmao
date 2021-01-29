@@ -219,14 +219,31 @@ function SelectableDeck(props) {
 }
 
 function GameOver(props) {
+  const [winner, setWinner] = useState(logic.getWinner(props.gameRef.current));
+  const [readyToRestart, setReadyToRestart] = useState(
+    logic.isReadyToRestart(props.gameRef.current)
+  );
+
+  const updateGameState = useCallback(() => {
+    setWinner(logic.getWinner(props.gameRef.current));
+    setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
+  }, [props.gameRef]);
+
+  useEffect(() => {
+    const indx = logic.addListener(props.gameRef.current, updateGameState);
+    return () => {
+      logic.removeListener(props.gameRef.current, indx);
+    };
+  }, [props.gameRef, updateGameState]);
+
   return (
     <div>
-      <div style={{ fontSize: "2em" }}>
-        Game is over!!!! {props.winner} won!
-      </div>
-      <button onClick={() => logic.restartGame(props.gameRef.current)}>
-        Play again!
-      </button>
+      <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
+      {readyToRestart && (
+        <button onClick={() => logic.restartGame(props.gameRef.current)}>
+          Play again!
+        </button>
+      )}
     </div>
   );
 }
@@ -291,10 +308,7 @@ export function Game(props) {
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
         <React.Fragment>
-          <GameOver
-            gameRef={props.gameRef}
-            winner={logic.getWinner(props.gameRef.current)}
-          />
+          <GameOver gameRef={props.gameRef} />
           <hr />
         </React.Fragment>
       )}
