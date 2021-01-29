@@ -180,12 +180,7 @@ function MyHand(props) {
   );
 }
 function Deck(props) {
-  if (props.cards.length === 0) {
-    return <div>(none)</div>;
-  }
-  return (
-    <div style={{ fontSize: "4em" }}>{cards.serializeDeck(props.cards)}</div>
-  );
+  return <SelectableDeck cards={props.cards} disabled={true} />;
 }
 function SelectableDeck(props) {
   if (props.cards.length === 0) {
@@ -204,10 +199,12 @@ function SelectableDeck(props) {
               onChange={props.changeCard}
               id={cards.serializeCardASCII(card)}
               key={`mycardsradio${index}`}
+              disabled={props.disabled}
             />
             <label
               htmlFor={cards.serializeCardASCII(card)}
               key={`mycardslabel${index}`}
+              style={props.disabled ? { cursor: "default" } : {}}
             >
               {cards.serializeCard(card)}
             </label>
