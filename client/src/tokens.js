@@ -300,14 +300,14 @@ export async function verifyDrawnToken(
 export async function play(tokenState, token, salt1, salt2, userID) {
   let input = {
     cardNumber: `${token.id}`,
-    oldCardstate: `${tokenListToNum(tokenState.myTokens)}`,
-    newCardstate: `${tokenListToNum(tokenState.myTokens) + 3 ** token.id}`,
+    oldCardState: `${tokenListToNum(tokenState.myTokens)}`,
+    newCardState: `${tokenListToNum(tokenState.myTokens) + 3 ** token.id}`,
     oldNumCardsInDeck: `${tokenState.tokenStats[userID][TOKEN_STATE.STOCK]}`,
     newNumCardsInDeck: `${tokenState.tokenStats[userID][TOKEN_STATE.STOCK]}`,
     salt1: `${salt1}`,
     salt2: `${salt2}`,
   };
-  let proof = await snarks(input, "playCard");
+  let proof = await snarks.prove(input, "playCard");
   assert(
     tokenState.myTokens.filter((tok) => tok.id === token.id)[0].state ===
       TOKEN_STATE.HAND,
