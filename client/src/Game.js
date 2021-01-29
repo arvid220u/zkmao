@@ -287,6 +287,8 @@ function CreateRule(props) {
   const [selectedToken, setSelectedToken] = useState(null);
   const [ruleName, setRuleName] = useState("");
 
+  const zeroTokens = props.tokens.length === 0;
+
   return (
     <div>
       create a rule:
@@ -309,24 +311,34 @@ function CreateRule(props) {
           </React.Fragment>
         );
       })}
+      {zeroTokens && (
+        <React.Fragment>
+          <span>
+            you don't have any tokens so you can't create any rules :(
+          </span>
+          <br />
+        </React.Fragment>
+      )}
       <input
         type="text"
         value={ruleName}
         onChange={(e) => setRuleName(e.target.value)}
         placeholder="(rule name)"
+        disabled={!props.canSubmit || zeroTokens}
       />
       <br />
       <textarea
         value={rule}
         onChange={(e) => setRule(e.target.value)}
         placeholder="(rule code)"
+        disabled={!props.canSubmit || zeroTokens}
       />
       <br />
       <button
         onClick={() =>
           logic.submitRule(props.gameRef.current, rule, ruleName, selectedToken)
         }
-        disabled={!props.canSubmit}
+        disabled={!props.canSubmit || zeroTokens}
       >
         Create rule!
       </button>
