@@ -50,3 +50,5 @@ the main circuits are:
 3. `maoRule`: this circuit allows for players to enforce their personal rules without revealing them.
 
 the other circuits are used for supporting these main circuits.
+
+(yes, we do confuse "tokens" with "cards" a lot — we started out building the token snarks intending them for card games, but ended up using them to power zkmao's tokens. we believe that our circuits are more powerful than they get use for with the tokens, and would encourage anyone to apply the same idea to some other card game with private decks you want to draw randomly from)
