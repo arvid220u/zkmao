@@ -145,28 +145,25 @@ export function createGame(conn) {
   setUpPublicRules(game);
   return game;
 }
-function setUpPublicRules(game) {
-  rules
-    .createPrivateRule("spades", "return card1 < 13;", rules.EVERYONE)
-    .then((rule) => {
-      game.myRules.push(rule);
-      const publicRule = rules.publicRule(rule);
-      game.allRules.push(publicRule);
-      update(game);
-    })
-    .then(() => {
-      return rules.createPrivateRule(
-        "lastcard",
-        "return lastCard;",
-        rules.EVERYONE
-      );
-    })
-    .then((rule) => {
-      game.myRules.push(rule);
-      const publicRule = rules.publicRule(rule);
-      game.allRules.push(publicRule);
-      update(game);
-    });
+async function setUpPublicRules(game) {
+  let cleanSlate = {
+    spades: "return card1 < 13;",
+    lastcard: "return lastCard;",
+    "have a nice day": "return card1 % 13 === 6;",
+    "thank you": "return card2 % 13 === 6;",
+    "I salute the chair": "return (card1 % 13) > 9",
+  };
+  for (const ruleName in cleanSlate) {
+    let rule = await rules.createPrivateRule(
+      ruleName,
+      cleanSlate[ruleName],
+      rules.EVERYONE
+    );
+    game.myRules.push(rule);
+    const publicRule = rules.publicRule(rule);
+    game.allRules.push(publicRule);
+    update(game);
+  }
 }
 function resetPhase(game, phase, args) {
   assert(PHASES.includes(phase), game);
