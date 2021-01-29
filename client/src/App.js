@@ -21,6 +21,11 @@ function Create1(props) {
 
 function Create2(props) {
   const [joinKey, setJoinKey] = useState("");
+
+  const onAddPlayer = useCallback(() => {
+    p2p.acceptAnswer(props.connRef.current, joinKey);
+  }, [joinKey]);
+
   return (
     <div>
       send this message to your friends: <code>{props.offer}</code>
@@ -30,30 +35,29 @@ function Create2(props) {
         type="text"
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
+        onKeyUp={(e) => (e.key === "Enter" ? onAddPlayer() : 0)}
       ></input>
-      <button onClick={() => p2p.acceptAnswer(props.connRef.current, joinKey)}>
-        Add player
-      </button>
+      <button onClick={onAddPlayer}>Add player</button>
     </div>
   );
 }
 
 function Join1(props) {
   const [joinKey, setJoinKey] = useState("");
+
+  const onJoin = useCallback(() => {
+    p2p.join(props.connRef.current, joinKey, props.setMyAnswer);
+  }, [joinKey]);
+
   return (
     <div>
       <input
         type="text"
         value={joinKey}
         onChange={(e) => setJoinKey(e.target.value)}
+        onKeyUp={(e) => (e.key === "Enter" ? onJoin() : 0)}
       ></input>
-      <button
-        onClick={() =>
-          p2p.join(props.connRef.current, joinKey, props.setMyAnswer)
-        }
-      >
-        Join
-      </button>
+      <button onClick={onJoin}>Join</button>
     </div>
   );
 }

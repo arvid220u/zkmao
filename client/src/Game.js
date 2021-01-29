@@ -85,6 +85,9 @@ function Play(props) {
       <PlayButton
         disabled={!myTurn || props.disabled}
         play={() => {
+          if (selectedCard === null) {
+            return alert("pls select a card!");
+          }
           logic.playCard(
             props.gameRef.current,
             cards.deserializeCard(selectedCard),
