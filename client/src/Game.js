@@ -50,6 +50,8 @@ function Play(props) {
   );
 
   const updateGameState = useCallback(() => {
+    console.log("updating game state in Play :))))))");
+    console.log(JSON.parse(JSON.stringify(props.gameRef.current)));
     setPlayedCards(logic.getPlayedCards(props.gameRef.current));
     setMyHand(logic.getMyHand(props.gameRef.current));
     setOppHand(logic.getOppHand(props.gameRef.current));
@@ -229,7 +231,7 @@ function Rules(props) {
       Rules:
       <ul>
         {props.rules.map((rule) => {
-          return <li>{JSON.stringify(rule)}</li>;
+          return <li key={rule.hash}>{JSON.stringify(rule)}</li>;
         })}
       </ul>
     </div>

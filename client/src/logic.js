@@ -72,6 +72,8 @@ import assert from "./assert.js";
 //      acksReceived = []
 //      lastPlayedCard
 //      lastPlayedUser
+//      lastSelectedRules
+//      penaltyRules
 //
 // gameover: (transitions directly to setup.sentReady)
 //      winner = user_id
@@ -203,6 +205,8 @@ function resetPhase(game, phase, args) {
     data.acksReceived = [];
     data.lastPlayedCard = null;
     data.lastPlayedUser = null;
+    data.lastSelectedRules = null;
+    data.penaltyRules = [];
   }
   game.data[phase] = data;
 }
@@ -325,6 +329,7 @@ function handlePlayMethod(game, m) {
   const user = m.from;
   const card = m.card;
   const selectedRules = m.rules;
+  const provedRules = m.provedRules;
 
   // make sure it is this user's turn
   if (user !== data.players[data.nextTurn]) {
@@ -344,8 +349,31 @@ function handlePlayMethod(game, m) {
     return abort(game, "user tried to play illegal card");
   }
 
+  // verify that provedRules contains all the (1) public rules and (2) user's rules
+  const userRulesHashes = game.allRules
+    .filter((r) => r.owner === rules.EVERYONE || r.owner === user)
+    .map((r) => r.hash);
+  const provedRulesHashes = provedRules.map((r) => r.rule.hash);
+  // these arrays need to contain the same set
+  if (
+    JSON.stringify(userRulesHashes.sort()) !==
+    JSON.stringify(provedRulesHashes.sort())
+  ) {
+    return abort(game, "did not prove outcomes for all rules user knows of");
+  }
+  const penalties = rules.verifyPenalties(
+    card,
+    data.playedCards,
+    selectedRules,
+    provedRules
+  );
+  if (penalties === rules.INCORRECT_PENALTIES) {
+    return abort(game, "proofs were incorrect somehow :(");
+  }
+  recordPenalties(game, penalties);
+
   // actually do the move
-  actuallyPlayCard(game, user, card);
+  actuallyPlayCard(game, user, card, selectedRules);
 
   sendPlayAck(game, user, card, selectedRules);
 
@@ -360,6 +388,7 @@ function handlePlayAckMethod(game, m) {
   const user = m.user;
   const from = m.from;
   const card = m.card;
+  const provedRules = m.provedRules;
 
   // make sure the right user n right card was acked
   if (user !== data.lastPlayedUser) {
@@ -373,12 +402,58 @@ function handlePlayAckMethod(game, m) {
     return abort(game, "already received ack from this user");
   }
 
-  // TODO: verify the zk snarks
+  // verify that provedRules contains all the (1) public rules and (2) user's rules
+  const userRulesHashes = game.allRules
+    .filter((r) => r.owner === rules.EVERYONE || r.owner === from)
+    .map((r) => r.hash);
+  const provedRulesHashes = provedRules.map((r) => r.rule.hash);
+  // these arrays need to contain the same set
+  if (
+    JSON.stringify(userRulesHashes.sort()) !==
+    JSON.stringify(provedRulesHashes.sort())
+  ) {
+    return abort(game, "did not prove outcomes for all rules user knows of");
+  }
+
+  const penalties = rules.verifyPenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    data.lastSelectedRules,
+    provedRules
+  );
+  if (penalties === rules.INCORRECT_PENALTIES) {
+    return abort(game, "proofs were incorrect somehow :(");
+  }
+  recordPenalties(game, penalties);
 
   data.acksReceived.push(from);
 
   maybeStopWaitingForAcks(game);
 
+  update(game);
+}
+function recordPenalties(game, penalties) {
+  const data = game.data[game.phase];
+  for (const penalty of penalties) {
+    if (!data.penaltyRules.includes(penalty)) {
+      data.penaltyRules.push(penalty);
+    }
+  }
+}
+function enforcePenalties(game, user, penalties) {
+  console.log("enforce penalties:");
+  console.log(penalties);
+  const data = game.data[game.phase];
+  // just take cards from the played cards as long as we can do so
+  // take from the bottom
+  for (let i = 0; i < penalties.length && data.playedCards.length > 0; i++) {
+    // TODO: make penalties have different worth HERE
+    const bottomCard = data.playedCards[0];
+    data.playerHands[user].push(bottomCard);
+    data.playedCards.splice(0, 1);
+  }
+  console.log("right before updating the game:");
+  console.log(JSON.parse(JSON.stringify(game)));
   update(game);
 }
 function handleAbortMethod(game, m) {
@@ -397,12 +472,13 @@ function abort(game, reason) {
   update(game);
 }
 
-function actuallyPlayCard(game, user, card) {
+function actuallyPlayCard(game, user, card, selectedRules) {
   const data = game.data[game.phase];
   data.nextTurn = (data.nextTurn + 1) % data.players.length;
   data.state = PLAY_STATE.WAIT_FOR_PLAYACK;
   data.lastPlayedCard = card;
   data.lastPlayedUser = user;
+  data.lastSelectedRules = selectedRules;
   if (card !== cards.VOID_CARD) {
     data.playedCards.push(card);
     data.playerHands[user] = data.playerHands[user].filter(
@@ -434,8 +510,9 @@ export function playCard(game, card, selectedRules) {
   );
   assert(
     selectedRules.every(
-      (rule) => game.allRules.filter((x) => rules.sameRule(x, rule)) > 0
-    )
+      (rule) => game.allRules.filter((x) => rules.sameRule(x, rule)).length > 0
+    ),
+    game
   );
   console.log(`play card!`);
   console.log(card);
@@ -451,11 +528,21 @@ export function playCard(game, card, selectedRules) {
     selectedRules,
     game.myRules
   );
-  // TODO: record how many penalties were received (probably 0 lol u should know your own rules)
+  const penalties = rules.verifyPenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    provedRules
+  );
+  assert(
+    penalties !== rules.INCORRECT_PENALTIES,
+    "your own penalty calculations were wrong lololol"
+  );
+  recordPenalties(game, penalties);
 
   send(game, { method: METHOD.PLAY, card, rules: selectedRules, provedRules });
 
-  actuallyPlayCard(game, game.userId, card);
+  actuallyPlayCard(game, game.userId, card, selectedRules);
   update(game);
 }
 
@@ -506,10 +593,14 @@ function maybeStopWaitingForAcks(game) {
   const data = game.data[game.phase];
   // everyone except the player needs to ack the card
   if (data.acksReceived.length === data.players.length - 1) {
+    enforcePenalties(game, data.lastPlayedUser, data.penaltyRules);
+
     data.state = PLAY_STATE.WAIT_FOR_PLAY;
     data.acksReceived = [];
     data.lastPlayedCard = null;
     data.lastPlayedUser = null;
+    data.lastSelectedRules = null;
+    data.penaltyRules = [];
 
     // check if someone won
     checkIfWon(game);
@@ -529,7 +620,17 @@ function sendPlayAck(game, user, card, selectedRules) {
     selectedRules,
     game.myRules
   );
-  // TODO: record how many penalties were received
+  const penalties = rules.verifyPenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    provedRules
+  );
+  assert(
+    penalties !== rules.INCORRECT_PENALTIES,
+    "my own proofs were incorrect lolol im stupid"
+  );
+  recordPenalties(game, penalties);
 
   send(game, { method: METHOD.PLAYACK, card, user, provedRules });
 
@@ -612,14 +713,14 @@ export function getOppUserId(game) {
 }
 export function getMyHand(game) {
   const data = game.data[PHASE.PLAY];
-  return data.playerHands[getMyUserId(game)];
+  return [...data.playerHands[getMyUserId(game)]];
 }
 export function getOppHand(game) {
   const data = game.data[PHASE.PLAY];
   const playerHand = data.playerHands[getOppUserId(game)];
   console.log("player hand!");
   console.log(JSON.stringify(playerHand));
-  return playerHand;
+  return [...playerHand];
 }
 function isMyTurn(game) {
   const data = game.data[PHASE.PLAY];
@@ -632,7 +733,7 @@ export function isMyTurnEnabled(game) {
 
 export function getPlayedCards(game) {
   const data = game.data[PHASE.PLAY];
-  return data.playedCards;
+  return [...data.playedCards];
 }
 
 export function getWinner(game) {
@@ -641,5 +742,5 @@ export function getWinner(game) {
 }
 
 export function getRules(game) {
-  return game.allRules;
+  return [...game.allRules];
 }
