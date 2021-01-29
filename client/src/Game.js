@@ -4,6 +4,7 @@ import { useCallback, useRef, useEffect, useState } from "react";
 import * as p2p from "./p2p.js";
 import * as logic from "./logic.js";
 import * as cards from "./cards.js";
+import * as rules from "./rules.js";
 
 import { Chat } from "./Chat.js";
 
@@ -29,9 +30,24 @@ function Play(props) {
   const [myTurn, setMyTurn] = useState(
     logic.isMyTurnEnabled(props.gameRef.current)
   );
+  const [selectedRules, setSelectedRules] = useState([]);
+
   const changeCard = useCallback((e) => {
     setSelectedCard(e.currentTarget.value);
   }, []);
+
+  const toggleRule = useCallback(
+    (e) => {
+      const rule = JSON.parse(e.currentTarget.value);
+      console.log(`toggling rule ${rule.name}`);
+      if (selectedRules.filter((x) => rules.sameRule(x, rule)).length > 0) {
+        setSelectedRules(selectedRules.filter((x) => !rules.sameRule(x, rule)));
+      } else {
+        setSelectedRules([rule, ...selectedRules]);
+      }
+    },
+    [selectedRules]
+  );
 
   const updateGameState = useCallback(() => {
     setPlayedCards(logic.getPlayedCards(props.gameRef.current));
@@ -51,8 +67,6 @@ function Play(props) {
 
   return (
     <div>
-      {props.disabled || "Playing the game!!!"}
-      <hr />
       <Hand cards={oppHand} user={oppUserId} />
       <PlayedCards cards={playedCards} />
       <MyHand
@@ -61,16 +75,57 @@ function Play(props) {
         changeCard={changeCard}
         selectedCard={selectedCard}
       />
+      <SelectRule
+        rules={props.rules}
+        selectedRules={selectedRules}
+        toggleRule={toggleRule}
+      />
       <PlayButton
         disabled={!myTurn || props.disabled}
-        play={() =>
+        play={() => {
           logic.playCard(
             props.gameRef.current,
-            cards.deserializeCard(selectedCard)
-          )
-        }
-        pass={() => logic.playCard(props.gameRef.current, cards.VOID_CARD)}
+            cards.deserializeCard(selectedCard),
+            selectedRules
+          );
+          setSelectedRules([]);
+        }}
+        pass={() => {
+          logic.playCard(props.gameRef.current, cards.VOID_CARD, selectedRules);
+          setSelectedRules([]);
+        }}
       />
+    </div>
+  );
+}
+
+function SelectRule(props) {
+  return (
+    <div style={{ marginTop: "5px", marginBottom: "7px" }}>
+      rules:
+      <div className="SelectRule">
+        {props.rules.map((rule, index) => {
+          return (
+            <React.Fragment key={`rulesfragment${index}`}>
+              <input
+                type="checkbox"
+                name="rules"
+                value={JSON.stringify(rule)}
+                checked={
+                  props.selectedRules.filter((x) => rules.sameRule(x, rule))
+                    .length > 0
+                }
+                onChange={props.toggleRule}
+                id={rule.hash}
+                key={`rulesradio${index}`}
+              />
+              <label htmlFor={rule.hash} key={`ruleslabel${index}`}>
+                {rule.name}
+              </label>
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -168,15 +223,30 @@ function GameOver(props) {
   );
 }
 
+function Rules(props) {
+  return (
+    <div>
+      Rules:
+      <ul>
+        {props.rules.map((rule) => {
+          return <li>{JSON.stringify(rule)}</li>;
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function Game(props) {
   const [phase, setPhase] = useState(props.gameRef.current.phase);
   const [myUserId, setMyUserId] = useState(
     logic.getMyUserId(props.gameRef.current)
   );
+  const [rules, setRules] = useState(logic.getRules(props.gameRef.current));
 
   const updateGameState = useCallback(() => {
     setPhase(props.gameRef.current.phase);
     setMyUserId(logic.getMyUserId(props.gameRef.current));
+    setRules(logic.getRules(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -191,19 +261,32 @@ export function Game(props) {
       welcome to the game, {myUserId}!
       <hr />
       {phase === logic.PHASE.GAMEOVER && (
-        <GameOver
-          gameRef={props.gameRef}
-          winner={logic.getWinner(props.gameRef.current)}
-        />
+        <React.Fragment>
+          <GameOver
+            gameRef={props.gameRef}
+            winner={logic.getWinner(props.gameRef.current)}
+          />
+          <hr />
+        </React.Fragment>
       )}
-      {phase === logic.PHASE.SETUP && <Setup />}
-      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
-        <Play
-          gameRef={props.gameRef}
-          disabled={phase === logic.PHASE.GAMEOVER}
-        />
+      {phase === logic.PHASE.SETUP && (
+        <React.Fragment>
+          <Setup />
+          <hr />
+        </React.Fragment>
       )}
+      <Rules rules={rules} />
       <hr />
+      {(phase === logic.PHASE.PLAY || phase === logic.PHASE.GAMEOVER) && (
+        <React.Fragment>
+          <Play
+            gameRef={props.gameRef}
+            disabled={phase === logic.PHASE.GAMEOVER}
+            rules={rules}
+          />
+          <hr />
+        </React.Fragment>
+      )}
       <Chat connRef={props.connRef} />
     </div>
   );

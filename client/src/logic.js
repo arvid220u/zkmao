@@ -6,6 +6,7 @@ import * as p2p from "./p2p.js";
 import * as utils from "./utils.js";
 import * as cards from "./cards.js";
 import * as config from "./config.js";
+import * as rules from "./rules.js";
 
 import assert from "./assert.js";
 
@@ -40,8 +41,8 @@ import assert from "./assert.js";
 //  1.3 when received all STARTs: verifies all hashes, xors all numbers, seed rng with this, then just pick cards
 //  1.4 using same seed just choose order
 // 2. play:
-//  2.1 someone: PLAY card userID
-//  2.2 everyone else: PLAYACK card user userID
+//  2.1 someone: PLAY card userID rules provedRules (same as for playack, need to show you enforce rules consistently even for yourself)
+//  2.2 everyone else: PLAYACK card user userID provedRules (rulehash, snark proof, for each rule you know)
 // 3. abort:
 //  3.1 send ABORT userID to every user, be sad
 
@@ -130,12 +131,41 @@ export function createGame(conn) {
     userId: userId,
     phase: null,
     data: {}, // contains data for every phase
+
+    // rule data
+    myRules: [],
+    allRules: [],
   };
   for (const phase of PHASES) {
     game.data[phase] = {};
   }
   initPhase(game, PHASE.SETUP);
+  setUpPublicRules(game);
   return game;
+}
+function setUpPublicRules(game) {
+  // TODO: add more public rules
+  rules
+    .createPrivateRule("spades", "card.suit == spades", rules.EVERYONE)
+    .then((rule) => {
+      game.myRules.push(rule);
+      const publicRule = rules.publicRule(rule);
+      game.allRules.push(publicRule);
+      update(game);
+    })
+    .then(() => {
+      return rules.createPrivateRule(
+        "lastcard",
+        "isLastCard()",
+        rules.EVERYONE
+      );
+    })
+    .then((rule) => {
+      game.myRules.push(rule);
+      const publicRule = rules.publicRule(rule);
+      game.allRules.push(publicRule);
+      update(game);
+    });
 }
 function resetPhase(game, phase, args) {
   assert(PHASES.includes(phase), game);
@@ -218,10 +248,6 @@ function send(game, m) {
   p2p.sendData(game.conn, m);
 }
 
-function unimplemented() {
-  assert(false, "not implemented yet!!");
-}
-
 function handleReadyMethod(game, m) {
   // should be in setup phase, or gameover phase
   if (!(game.phase === PHASE.SETUP || game.phase === PHASE.GAMEOVER))
@@ -275,7 +301,7 @@ async function handleStartMethod(game, m) {
   if (!data.players.includes(user)) return abort(game, `unknown user ${user}`);
 
   // assert that the hash is ok
-  const randomNumberHash = await hash(`${randomNumber}`);
+  const randomNumberHash = await utils.hash(`${randomNumber}`);
   if (data.readyHashes[user] !== randomNumberHash)
     return abort(
       game,
@@ -298,6 +324,7 @@ function handlePlayMethod(game, m) {
 
   const user = m.from;
   const card = m.card;
+  const selectedRules = m.rules;
 
   // make sure it is this user's turn
   if (user !== data.players[data.nextTurn]) {
@@ -320,7 +347,7 @@ function handlePlayMethod(game, m) {
   // actually do the move
   actuallyPlayCard(game, user, card);
 
-  sendPlayAck(game, user, card);
+  sendPlayAck(game, user, card, selectedRules);
 
   update(game);
 }
@@ -356,7 +383,7 @@ function handlePlayAckMethod(game, m) {
 }
 function handleAbortMethod(game, m) {
   console.log("ABORTING :(((( SAD");
-  unimplemented();
+  utils.unimplemented();
 
   update(game);
 }
@@ -368,17 +395,6 @@ function abort(game, reason) {
   game.phase = PHASE.ABORT;
 
   update(game);
-}
-
-async function hash(message) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join(""); // convert bytes to hex string
-  return hashHex;
 }
 
 function actuallyPlayCard(game, user, card) {
@@ -407,7 +423,7 @@ function legalToPlayCard(game, card) {
   return lastCard.suit === card.suit || lastCard.rank === card.rank;
 }
 
-export function playCard(game, card) {
+export function playCard(game, card, selectedRules) {
   assert(game.phase === PHASE.PLAY && isMyTurn(game), game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAY, game);
@@ -416,12 +432,28 @@ export function playCard(game, card) {
       data.playerHands[game.userId].some((c) => cards.sameCard(c, card)),
     game
   );
+  assert(
+    selectedRules.every(
+      (rule) => game.allRules.filter((x) => rules.sameRule(x, rule)) > 0
+    )
+  );
   console.log(`play card!`);
   console.log(card);
+  console.log(selectedRules);
 
   assert(legalToPlayCard(game, card), game);
 
-  send(game, { method: METHOD.PLAY, card });
+  // we do this for ourselves. we need to run the snarks
+  // to prove to others that we enforce our own rules correctly even on ourselves
+  const provedRules = rules.determinePenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    game.myRules
+  );
+  // TODO: record how many penalties were received (probably 0 lol u should know your own rules)
+
+  send(game, { method: METHOD.PLAY, card, rules: selectedRules, provedRules });
 
   actuallyPlayCard(game, game.userId, card);
   update(game);
@@ -440,7 +472,7 @@ export async function sendReady(game) {
   // generate a random number
   data.myRandom = Math.floor(Math.random() * 2 ** 64);
   // hash the random number
-  const hash_r = await hash(`${data.myRandom}`);
+  const hash_r = await utils.hash(`${data.myRandom}`);
   console.log(hash_r);
   data.readyHashes[game.userId] = hash_r;
   send(game, { method: METHOD.READY, hash: hash_r });
@@ -486,14 +518,20 @@ function maybeStopWaitingForAcks(game) {
   }
 }
 
-function sendPlayAck(game, user, card) {
+function sendPlayAck(game, user, card, selectedRules) {
   assert(game.phase === PHASE.PLAY, game);
   const data = game.data[game.phase];
   assert(data.state === PLAY_STATE.WAIT_FOR_PLAYACK, game);
 
-  // TODO: run the zk rule snarks to determine penalties
+  const provedRules = rules.determinePenalties(
+    card,
+    data.playedCards.slice(0, data.playedCards.length - 1),
+    selectedRules,
+    game.myRules
+  );
+  // TODO: record how many penalties were received
 
-  send(game, { method: METHOD.PLAYACK, card, user });
+  send(game, { method: METHOD.PLAYACK, card, user, provedRules });
 
   assert(!data.acksReceived.includes(game.userId), game);
   data.acksReceived.push(game.userId);
@@ -600,4 +638,8 @@ export function getPlayedCards(game) {
 export function getWinner(game) {
   const data = game.data[PHASE.GAMEOVER];
   return data.winner;
+}
+
+export function getRules(game) {
+  return game.allRules;
 }
