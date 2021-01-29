@@ -353,6 +353,7 @@ function CreateRule(props) {
       </span>
       <br />
       <textarea
+        style={{ width: "250px", height: "50px" }}
         value={rule}
         onChange={(e) => setRule(e.target.value)}
         placeholder="(rule code)"
