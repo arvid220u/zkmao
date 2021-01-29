@@ -59,6 +59,8 @@ import assert from "./assert.js";
 //      sentFinalize = true/false
 //      finalizedReceived = []
 //      readyToRestart = true/false
+//      didDrawTokens = true/false
+//      drawnTokens = []
 //
 // abort:
 //      (no data)
@@ -201,6 +203,8 @@ function resetPhase(game, phase, args) {
     data.sentFinalize = false;
     data.finalizedReceived = [];
     data.readyToRestart = false;
+    data.didDrawTokens = false;
+    data.drawnTokens = [];
   }
   game.data[phase] = data;
 }
@@ -640,6 +644,19 @@ function sendPlayAck(game, user, card, selectedRules) {
   update(game);
 }
 
+export function drawTokens(game) {
+  assert(game.phase === PHASE.GAMEOVER, "pls be in gameover state sir");
+  const data = game.data[game.phase];
+  assert(!data.didDrawTokens, "cannot draw tokens twice!!!!!");
+
+  data.didDrawTokens = true;
+
+  console.log("drawing tokens!");
+  utils.unimplemented();
+
+  update(game);
+}
+
 function maybeStartGame(game) {
   const data = game.data[game.phase];
   if (data.players.length === Object.keys(data.startNumbers).length) {
@@ -759,4 +776,10 @@ export function isReadyToRestart(game) {
   const data = game.data[PHASE.GAMEOVER];
   if (game.phase !== PHASE.GAMEOVER) return false;
   return data.readyToRestart;
+}
+
+export function isReadyToDrawTokens(game) {
+  const data = game.data[PHASE.GAMEOVER];
+  if (game.phase !== PHASE.GAMEOVER) return false;
+  return !data.didDrawTokens;
 }

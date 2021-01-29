@@ -100,3 +100,14 @@ function tokenNumToHash(tokenNum) {
 export function serializeTokens(tokens) {
   return tokens.map((t) => `${t.tokenPower}`).join(",");
 }
+
+export function awardFunction(numCards) {
+  if (numCards === 0) {
+    return 3;
+  } else if (numCards === 1) {
+    return 2;
+  } else if (numCards < 5) {
+    return 1;
+  }
+  return 0;
+}

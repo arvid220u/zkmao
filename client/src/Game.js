@@ -223,10 +223,18 @@ function GameOver(props) {
   const [readyToRestart, setReadyToRestart] = useState(
     logic.isReadyToRestart(props.gameRef.current)
   );
+  const [endedWithCards, setEndedWithCards] = useState(
+    logic.getMyHand(props.gameRef.current).length
+  );
+  const [readyToDrawTokens, setReadyToDrawTokens] = useState(
+    logic.isReadyToDrawTokens(props.gameRef.current)
+  );
 
   const updateGameState = useCallback(() => {
     setWinner(logic.getWinner(props.gameRef.current));
     setReadyToRestart(logic.isReadyToRestart(props.gameRef.current));
+    setEndedWithCards(logic.getMyHand(props.gameRef.current).length);
+    setReadyToDrawTokens(logic.isReadyToDrawTokens(props.gameRef.current));
   }, [props.gameRef]);
 
   useEffect(() => {
@@ -236,6 +244,8 @@ function GameOver(props) {
     };
   }, [props.gameRef, updateGameState]);
 
+  const nTokens = tokens.awardFunction(endedWithCards);
+
   return (
     <div>
       <div style={{ fontSize: "2em" }}>Game is over!!!! {winner} won!</div>
@@ -244,6 +254,15 @@ function GameOver(props) {
           Play again!
         </button>
       )}
+      because you ended with {endedWithCards} card
+      {endedWithCards === 1 ? "" : "s"} left, you are awarded {nTokens} token
+      {nTokens === 1 ? "" : "s"}, randomly drawn from the available tokens!
+      <button
+        onClick={() => logic.drawTokens(props.gameRef.current)}
+        disabled={!readyToDrawTokens}
+      >
+        Draw {nTokens} token{nTokens === 1 ? "" : "s"}!
+      </button>
     </div>
   );
 }
