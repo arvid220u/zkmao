@@ -9,10 +9,11 @@ import { computeCardIndex } from "./cards.js";
 // rule is a struct containing:
 //  - name: name of the rule
 //  - hash: hash of the compiled source code (same hash as within the snark)
+//  - owner: (the user id of the user owning the rule, or "everyone")
+//  - penalty: (int, the # cards to penalize with)
 //  if it is private, also contains:
 //  - source: (the human readable source code written a cool language)
 //  - compiled: (a list of integers which is the compiled version for the snark)
-//  - owner: (the user id of the user owning the rule, or "everyone")
 
 // the game will store:
 //  - myRules: a list of my private rules
@@ -21,11 +22,12 @@ import { computeCardIndex } from "./cards.js";
 
 export const EVERYONE = "everyone";
 
-export async function createPrivateRule(name, source, owner) {
+export async function createPrivateRule(name, source, owner, penalty) {
   const rule = {
     name,
     source,
     owner,
+    penalty,
     compiled: await compileSource(source),
     hash: null,
   };
@@ -38,6 +40,7 @@ export function publicRule(rule) {
     name: rule.name,
     owner: rule.owner,
     hash: rule.hash,
+    penalty: rule.penalty,
   };
   return publicRule;
 }
