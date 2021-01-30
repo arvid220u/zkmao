@@ -1,3 +1,9 @@
-export const START_FROM_RANK = 12;
+export const START_FROM_RANK = 6;
 
-export const CLEAN_SLATE_RULES = [];
+export const CLEAN_SLATE_RULES = [
+  "spades",
+  "lastcard",
+  "i salute the chair",
+  "have a nice day",
+  "thank you",
+];
