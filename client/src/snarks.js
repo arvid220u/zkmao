@@ -1,4 +1,4 @@
-import * as snarkjs from "snarkjs";
+/* global snarkjs */
 const pathToSnarks = "circuits/";
 /*
  *params:
