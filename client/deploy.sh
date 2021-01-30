@@ -8,6 +8,7 @@ GIT_HASH=$(git rev-parse --short HEAD)
 BRANCH=$(git branch --show-current)
 
 npm run build
+python3 stupidbabel.py
 if ! checkout_web; then
     echo "error!"
     exit -1
