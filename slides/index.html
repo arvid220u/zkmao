@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="dist/reset.css" />
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/black.css" id="theme" />
+
+    <!-- Theme used for syntax highlighted code -->
+    <link
+      rel="stylesheet"
+      href="plugin/highlight/monokai.css"
+      id="highlight-theme"
+    />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section><h1>ZKMAO</h1></section>
+        <section>
+          <section>
+            <h2>What is Mao?</h2>
+            <p>
+              Mao is a card game in which players compete to get rid of all their
+			  hand. It has the following rules:
+			  <ul>
+                <li> A player can only put a card down if it is the same suit or rank to the previous one </li>
+				<li> Players are penalized if they do not follow rules that depend on the history of the game. </li>
+				<li> The winner of each round gets to add a new secret rule that the other players need to abide by (by trial and error). </li>
+            </ul>
+            </p>
+          </section>
+        <section>
+			  <h2>Why ZK?</h2>
+			  <p>Zero knoweledge allows players to trust that the person penalizing them is actually following a predecided rule.</p>
+		 </section>
+		 <section>
+			<h2>Our Project</h2>
+			<p>We developed a two-player simplified version of Mao, the game goes as follows:</p>
+			<ul>
+                <li> At the end of each round, players randomly draw tokens from a set of personal tokens, the drawn token determines the penalty of the player's next rule. (the random scheme is also based on snarks) </li>
+				<li> Rules are restricted to being binary, and to only consider the last two moves</li>
+            </ul>
+	   </section>
+		</section>
+		<section>
+				<h1>A Live demo</h1>
+		</section>
+		<section>
+			<section>
+				<h2>How does it work?</h2>
+				<li> A new rule is encoded as a bitmap (using the bits of 29 integers).</li>
+				<li> A hash of the rule is shared with the other player.</li>
+				<li> In each step, each player verifies whether the other broke one of his rules, and produces a proof that a rule with the hash he shared is broken.</li>
+			</section>
+			<section>
+				<h2>Limits and future development?</h2>
+				<ul>
+					<li> make snarks faster. (example bit access). </li>
+					<li> experiment with other zk technologies.</li>
+					<li> Add support to more than two players.</li>
+					<li> Make proof verification faster by sending proofs on a rolling bases.</li>
+
+				</ul>
+			</section>
+		</section>		
+	
+      </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+    </script>
+  </body>
+</html>
