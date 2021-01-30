@@ -1,3 +1,3 @@
-export const START_FROM_RANK = 10;
+export const START_FROM_RANK = 11;
 
-export const CLEAN_SLATE_RULES = ["spades", "i salute the chair"];
+export const CLEAN_SLATE_RULES = [];
