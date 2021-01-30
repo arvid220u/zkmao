@@ -159,7 +159,7 @@ async function setUpPublicRules(game) {
   );
   let index = 0;
   for (const rule of answer) {
-    if (index >= config.NUM_CLEAN_SLATE_RULES) break;
+    if (!config.CLEAN_SLATE_RULES.includes(rule.name)) continue;
     game.myRules.push(rule);
     const publicRule = rules.publicRule(rule);
     game.allRules.push(publicRule);
