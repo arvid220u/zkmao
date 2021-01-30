@@ -7,6 +7,7 @@ function checkout_web {
 GIT_HASH=$(git rev-parse --short HEAD)
 BRANCH=$(git branch --show-current)
 
+cp node_modules/snarkjs/build/snarkjs.min.js public/snarkjs.min.js
 npm run build
 if ! checkout_web; then
     echo "error!"
