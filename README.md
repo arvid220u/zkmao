@@ -20,7 +20,7 @@ there are two main technologies that enables zkmao to be what it is:
 
 ## caveats
 
-fully peer-to-peer webrtc is unfortunately unreliable in many cases :(
+fully peer-to-peer webrtc is unfortunately unreliable in many cases :(. also, the zksnarks are kinda slow — while we think it is possible to performance engineer them and make them faster, it is worth noting that zksnarks are inherently slow
 
 # dev
 
