@@ -29,6 +29,7 @@ the folder structure is as follows:
 - `client`: the web client, in React, using `create-react-app`, which contains all the game logic and manages the p2p connections
 - `circuits`: the [`snarkjs`](https://github.com/iden3/snarkjs) circuits that are used in the client to prove things
 - `powersoftau`: supporting files for generating the `.ptau` files used in the ZK proofs
+- `slides`: slides for a presentation about this project
 
 ## setup
 
