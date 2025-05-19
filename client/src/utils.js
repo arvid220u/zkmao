@@ -97,3 +97,20 @@ export function objectify(obj) {
     )
   );
 }
+
+export function randomBigInt64() {
+  // Generate a cryptographically-secure 64-bit random value.
+  // We prefer WebCrypto (available in modern browsers and recent Node versions).
+  // If it is not available we fall back to Math.random (leaving behaviour unchanged
+  // but signalling reduced security in environments without WebCrypto).
+  const highLow = new Uint32Array(2);
+  if (typeof globalThis !== "undefined" && globalThis.crypto && globalThis.crypto.getRandomValues) {
+    globalThis.crypto.getRandomValues(highLow);
+  } else {
+    // Fallback – not cryptographically secure
+    highLow[0] = Math.floor(Math.random() * 2 ** 32);
+    highLow[1] = Math.floor(Math.random() * 2 ** 32);
+  }
+  // Combine the two 32-bit halves into a single 64-bit BigInt.
+  return (BigInt(highLow[0]) << 32n) | BigInt(highLow[1]);
+}
