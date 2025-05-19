@@ -25,3 +25,13 @@
 .SelectRule input:checked + label {
   background: rgba(49, 245, 0, 0.692);
 }
+
+.SelectableDeck label:hover,
+.SelectRule label:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.SelectableDeck input:checked + label,
+.SelectRule input:checked + label {
+  background: rgba(25, 118, 210, 0.25);
+}
